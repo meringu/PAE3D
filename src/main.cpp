@@ -17,8 +17,9 @@ Model* g_pGeometry = NULL;
 
 bool middleClickDown = false;
 int lastX, lastY = 0;
-float rotation = 0, tilt = 0, zoom = 10;
+float rotation = 45, tilt = 30, zoom = 10;
 bool ctrlKey = false, shiftKey;
+PAE3D_Point center;
 
 void PAE3D_Display() ;
 void PAE3D_Reshape(int w, int h) ;
@@ -36,9 +37,9 @@ int main(int argc, char** argv)
     glutInitWindowSize(g_nWinWidth, g_nWinHeight);
     g_mainWnd = glutCreateWindow("COMP308 Assignment1");
 
-    g_pGeometry = new Model;
+    g_pGeometry = new Model(&zoom);
 
-    glClearColor(0.3, 0.3, 0.3, 1);
+    glClearColor(0.5, 0.5, 0.5, 1);
     glutDisplayFunc(PAE3D_Display);
     glutReshapeFunc(PAE3D_Reshape);
     glutMouseFunc(PAE3D_MouseClick);
@@ -80,6 +81,8 @@ void PAE3D_Reshape(int w, int h)
 	g_nWinHeight = h;
 
     glViewport(0, 0, g_nWinWidth, g_nWinHeight);
+    PAE3D_SetCamera();
+    glutPostRedisplay();
 }
 
 // Set Light
@@ -127,13 +130,14 @@ void PAE3D_MouseClick(int button, int state, int x, int y){
 }
 
 void PAE3D_MouseMove(int x, int y) {
-
-
 	if (middleClickDown) {
 		if (ctrlKey) {
 			zoom *= 1 + (y - lastY)*0.005;
 		} else if (shiftKey) {
-
+			int height = glutGet(GLUT_WINDOW_HEIGHT);
+			center.x += ((lastX-x)*cos(rotation*M_PI/180)+(y-lastY)*sin(tilt*M_PI/180)*sin(rotation*M_PI/180))*zoom/height/4;
+			center.y += (y-lastY)*cos(tilt*M_PI/180)*zoom/height/4;
+			center.z += ((lastX-x)*sin(rotation*M_PI/180)+(lastY-y)*sin(tilt*M_PI/180)*cos(rotation*M_PI/180))*zoom/height/4;
 		} else {
 			rotation += x - lastX;
 			tilt += y - lastY;
@@ -160,11 +164,11 @@ void PAE3D_SetCamera()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	float xpos = -zoom*cos(tilt*M_PI/180)*sin(rotation*M_PI/180);
-	float ypos = zoom*sin(tilt*M_PI/180);
-	float zpos = zoom*cos(tilt*M_PI/180)*cos(rotation*M_PI/180);
+	float xpos = -zoom*cos(tilt*M_PI/180)*sin(rotation*M_PI/180) + center.x;
+	float ypos = zoom*sin(tilt*M_PI/180) + center.y;
+	float zpos = zoom*cos(tilt*M_PI/180)*cos(rotation*M_PI/180) + center.z;
 
-	gluLookAt(xpos, ypos, zpos, 0, 0, 0, 0, 1, 0);
+	gluLookAt(xpos, ypos, zpos, center.x, center.y, center.z, 0, 1, 0);
 }
 
 

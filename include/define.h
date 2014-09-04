@@ -66,6 +66,11 @@ struct PAE3D_Triangle {
 	unsigned int t3;
 };
 
+struct PAE3D_Edge {
+	unsigned int v1;
+	unsigned int v2;
+};
+
 struct PAE3D_Quad {
 
 	unsigned int n;

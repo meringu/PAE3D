@@ -9,11 +9,15 @@
 using namespace std;
 
 int numVert, numNorm, numUV, numFace;
+float* zoomLevel;
+GLUquadric* quadric = gluNewQuadric();
 
-Model::Model(void) {
+Model::Model(float* zoom) {
+	zoomLevel = zoom;
+
 	m_pVertexArray = NULL;
 	m_pNormalArray = NULL;
-	m_pUVArray = NULL;
+	m_pEdgeArray = NULL;
 	m_pQuadArray = NULL;
 
 
@@ -80,8 +84,57 @@ Model::Model(void) {
 	m_pQuadArray[5].v3 = 6;
 	m_pQuadArray[5].v4 = 7;
 	m_pQuadArray[5].n = 5;
-	m_nNumUV = m_nNumNormal = 0;
-	m_glGeomList = 0;
+
+	m_nNumEdge = 12;
+	m_pEdgeArray = new PAE3D_Edge[m_nNumEdge];
+	PAE3D_Edge e0;
+	e0.v1 = 0;
+	e0.v2 = 1;
+	m_pEdgeArray[0] = e0;
+	PAE3D_Edge e1;
+	e1.v1 = 1;
+	e1.v2 = 2;
+	m_pEdgeArray[1] = e1;
+	PAE3D_Edge e2;
+	e2.v1 = 2;
+	e2.v2 = 3;
+	m_pEdgeArray[2] = e2;
+	PAE3D_Edge e3;
+	e3.v1 = 3;
+	e3.v2 = 0;
+	m_pEdgeArray[3] = e3;
+	PAE3D_Edge e4;
+	e4.v1 = 4;
+	e4.v2 = 5;
+	m_pEdgeArray[4] = e4;
+	PAE3D_Edge e5;
+	e5.v1 = 5;
+	e5.v2 = 6;
+	m_pEdgeArray[5] = e5;
+	PAE3D_Edge e6;
+	e6.v1 = 6;
+	e6.v2 = 7;
+	m_pEdgeArray[6] = e6;
+	PAE3D_Edge e7;
+	e7.v1 = 7;
+	e7.v2 = 4;
+	m_pEdgeArray[7] = e7;
+	PAE3D_Edge e8;
+	e8.v1 = 0;
+	e8.v2 = 4;
+	m_pEdgeArray[8] = e8;
+	PAE3D_Edge e9;
+	e9.v1 = 1;
+	e9.v2 = 5;
+	m_pEdgeArray[9] = e9;
+	PAE3D_Edge e10;
+	e10.v1 = 2;
+	e10.v2 = 6;
+	m_pEdgeArray[10] = e10;
+	PAE3D_Edge e11;
+	e11.v1 = 3;
+	e11.v2 = 7;
+	m_pEdgeArray[11] = e11;
 
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pNormalArray[i] = QuadNormal(m_pQuadArray[i]);
@@ -93,8 +146,8 @@ Model::~Model(void) {
 		delete[] m_pVertexArray;
 	if (m_pNormalArray != NULL)
 		delete[] m_pNormalArray;
-	if (m_pUVArray != NULL)
-		delete[] m_pUVArray;
+	if (m_pEdgeArray != NULL)
+		delete[] m_pEdgeArray;
 	if (m_pQuadArray != NULL)
 		delete[] m_pQuadArray;
 }
@@ -148,51 +201,96 @@ PAE3D_Normal Model::QuadNormal(PAE3D_Quad q) {
 }
 
 void Model::RenderGeometry() {
-		glShadeModel(GL_SMOOTH);
-		//glCallList(m_glGeomList);
+	glShadeModel(GL_SMOOTH);
+	int height = glutGet(GLUT_WINDOW_HEIGHT);
 
+	// FLOOR AND AXES
 
-		glBegin(GL_QUADS);
-			glColor3f(1, 0, 0);
+	float level = pow(10, (int)log10(*zoomLevel)-1);
 
-			for (int i = 0; i < m_nNumPolygon; i++) {
-				PAE3D_Quad quad = m_pQuadArray[i];
-				PAE3D_Point p = m_pVertexArray[quad.v1];
-				PAE3D_Normal n = m_pNormalArray[quad.n];
-				glNormal3f(n.x, n.y, n.z);
-				glVertex3f(p.x, p.y, p.z);
-				p = m_pVertexArray[quad.v2];
-				glVertex3f(p.x, p.y, p.z);
-				p = m_pVertexArray[quad.v3];
-				glVertex3f(p.x, p.y, p.z);
-				p = m_pVertexArray[quad.v4];
-				glVertex3f(p.x, p.y, p.z);
-			}
-			glEnd();
+	printf("%f, %f\n", level, *zoomLevel);
 
-			for (int i = 0; i < m_nNumPolygon; i++) {
-				glBegin(GL_LINE_LOOP);
-				glColor3f(0, 0, 0);
-				PAE3D_Quad quad = m_pQuadArray[i];
-				PAE3D_Point p = m_pVertexArray[quad.v1];
-				glVertex3f(p.x, p.y, p.z);
-				p = m_pVertexArray[quad.v2];
-				glVertex3f(p.x, p.y, p.z);
-				p = m_pVertexArray[quad.v3];
-				glVertex3f(p.x, p.y, p.z);
-				p = m_pVertexArray[quad.v4];
-				glVertex3f(p.x, p.y, p.z);
-				glEnd();
-			}
+	glBegin(GL_LINES);
+	glColor3f(0.3, 0.3, 0.3);
+	for (int x = -10; x <=10; x++) {
+		if (x == 0) {
+			glVertex3f(x*level, 0, 0);
+			glVertex3f(x*level, 0, -10*level);
+		}
+		else {
+			glVertex3f(x*level, 0, 10*level);
+			glVertex3f(x*level, 0, -10*level);
+		}
+	}
+	for (int z = -10; z<=10; z++) {
+		if (z == 0) {
+			glVertex3f(0, 0, z*level);
+			glVertex3f(-10*level, 0, z*level);
+		}
+		else {
+			glVertex3f(10*level, 0, z*level);
+			glVertex3f(-10*level, 0, z*level);
+		}
+	}
+	// X-AXIS
+	glColor3f(1, 0, 0);
+	glVertex3f(0, 0, 0);
+	glVertex3f(1000, 0, 0);
+	// Y-AXIS
+	glColor3f(0, 1, 0);
+	glVertex3f(0, 0, 0);
+	glVertex3f(0, 1000, 0);
+	// Z-AXIS
+	glColor3f(0, 0, 1);
+	glVertex3f(0, 0, 0);
+	glVertex3f(0, 0, 1000);
+	glEnd();
 
-			for (int i = 0; i < m_nNumPoint; i++) {
-				glPushMatrix();
-				PAE3D_Point p = m_pVertexArray[i];
-				glTranslatef(p.x, p.y, p.z);
-				glutSolidSphere(0.1, 20, 20);
-				glPopMatrix();
-			}
+	// QAUDS
+	glBegin(GL_QUADS);
+	glColor3f(1, 0, 0);
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		PAE3D_Quad quad = m_pQuadArray[i];
+		PAE3D_Point p = m_pVertexArray[quad.v1];
+		PAE3D_Normal n = m_pNormalArray[quad.n];
+		glNormal3f(n.x, n.y, n.z);
+		glVertex3f(p.x, p.y, p.z);
+		p = m_pVertexArray[quad.v2];
+		glVertex3f(p.x, p.y, p.z);
+		p = m_pVertexArray[quad.v3];
+		glVertex3f(p.x, p.y, p.z);
+		p = m_pVertexArray[quad.v4];
+		glVertex3f(p.x, p.y, p.z);
+	}
+	glEnd();
 
+	// LINES
+	glColor3f(0, 0, 0);
+	for (int i = 0; i < m_nNumEdge; i++) {
+		PAE3D_Edge edge = m_pEdgeArray[i];
+		PAE3D_Point p1 = m_pVertexArray[edge.v1];
+		PAE3D_Point p2 = m_pVertexArray[edge.v2];
+		glPushMatrix();
+		glTranslatef(p1.x, p1.y, p1.z);
+		float length = sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y)+(p1.z-p2.z)*(p1.z-p2.z));
+		float x = (p1.y-p2.y) * 1;
+		float y = -(p1.x-p2.x)* 1;
+		float z = 0;
+		float angle = acos(-(p1.z-p2.z)) * 180 / M_PI;
+		glRotatef(angle, x, y, z);
+		gluCylinder(quadric, 0.5/height* *zoomLevel, 0.5/height* *zoomLevel, length, 20, 1);
+		glPopMatrix();
+	}
+
+	// POINTS
+	glColor3f(0, 0, 0);
+	for (int i = 0; i < m_nNumPoint; i++) {
+		glPushMatrix();
+		PAE3D_Point p = m_pVertexArray[i];
+		glTranslatef(p.x, p.y, p.z);
+		glutSolidSphere(1.0/height* *zoomLevel, 20, 20);
+		glPopMatrix();
+	}
 }
 
 
