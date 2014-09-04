@@ -25,7 +25,6 @@ public:
 	int m_glGeomList;	// Display List for Polygon
 
 public:
-	void CreateGeometry();
 	PAE3D_Point TriangleNormal(PAE3D_Triangle);
 	PAE3D_Normal QuadNormal(PAE3D_Quad);
 	void RenderGeometry();

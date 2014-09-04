@@ -147,39 +147,52 @@ PAE3D_Normal Model::QuadNormal(PAE3D_Quad q) {
 	return n;
 }
 
-void Model::CreateGeometry() {
-	if (m_glGeomList != 0){
-		glDeleteLists(m_glGeomList, 1);
-	}
-	m_glGeomList = glGenLists(1);
-	glNewList(m_glGeomList, GL_COMPILE);
-
-	glBegin(GL_QUADS);
-	glColor3f(1, 0, 0);
-
-	for (int i = 0; i < m_nNumPolygon; i++) {
-		PAE3D_Quad quad = m_pQuadArray[i];
-		PAE3D_Point p = m_pVertexArray[quad.v1];
-		PAE3D_Normal n = m_pNormalArray[quad.n];
-		glNormal3f(n.x, n.y, n.z);
-		glVertex3f(p.x, p.y, p.z);
-		p = m_pVertexArray[quad.v2];
-		glVertex3f(p.x, p.y, p.z);
-		//glNormal3f(n.x, n.y, n.z);
-		p = m_pVertexArray[quad.v3];
-		glVertex3f(p.x, p.y, p.z);
-		//glNormal3f(n.x, n.y, n.z);
-		p = m_pVertexArray[quad.v4];
-		glVertex3f(p.x, p.y, p.z);
-		//glNormal3f(n.x, n.y, n.z);
-	}
-	glEnd();
-	glEndList();
-}
-
 void Model::RenderGeometry() {
 		glShadeModel(GL_SMOOTH);
-		glCallList(m_glGeomList);
+		//glCallList(m_glGeomList);
+
+
+		glBegin(GL_QUADS);
+			glColor3f(1, 0, 0);
+
+			for (int i = 0; i < m_nNumPolygon; i++) {
+				PAE3D_Quad quad = m_pQuadArray[i];
+				PAE3D_Point p = m_pVertexArray[quad.v1];
+				PAE3D_Normal n = m_pNormalArray[quad.n];
+				glNormal3f(n.x, n.y, n.z);
+				glVertex3f(p.x, p.y, p.z);
+				p = m_pVertexArray[quad.v2];
+				glVertex3f(p.x, p.y, p.z);
+				p = m_pVertexArray[quad.v3];
+				glVertex3f(p.x, p.y, p.z);
+				p = m_pVertexArray[quad.v4];
+				glVertex3f(p.x, p.y, p.z);
+			}
+			glEnd();
+
+			for (int i = 0; i < m_nNumPolygon; i++) {
+				glBegin(GL_LINE_LOOP);
+				glColor3f(0, 0, 0);
+				PAE3D_Quad quad = m_pQuadArray[i];
+				PAE3D_Point p = m_pVertexArray[quad.v1];
+				glVertex3f(p.x, p.y, p.z);
+				p = m_pVertexArray[quad.v2];
+				glVertex3f(p.x, p.y, p.z);
+				p = m_pVertexArray[quad.v3];
+				glVertex3f(p.x, p.y, p.z);
+				p = m_pVertexArray[quad.v4];
+				glVertex3f(p.x, p.y, p.z);
+				glEnd();
+			}
+
+			for (int i = 0; i < m_nNumPoint; i++) {
+				glPushMatrix();
+				PAE3D_Point p = m_pVertexArray[i];
+				glTranslatef(p.x, p.y, p.z);
+				glutSolidSphere(0.1, 20, 20);
+				glPopMatrix();
+			}
+
 }
 
 

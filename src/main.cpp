@@ -18,6 +18,7 @@ Model* g_pGeometry = NULL;
 bool middleClickDown = false;
 int lastX, lastY = 0;
 float rotation = 0, tilt = 0, zoom = 10;
+bool ctrlKey = false, shiftKey;
 
 void PAE3D_Display() ;
 void PAE3D_Reshape(int w, int h) ;
@@ -25,6 +26,8 @@ void PAE3D_SetCamera();
 void PAE3D_SetLight();
 void PAE3D_MouseClick(int button, int state, int x, int y);
 void PAE3D_MouseMove(int x, int y);
+void PAE3D_KeyboardDown(unsigned char, int, int);
+void PAE3D_KeyboardUp(unsigned char, int, int);
 
 int main(int argc, char** argv)
 {
@@ -34,12 +37,14 @@ int main(int argc, char** argv)
     g_mainWnd = glutCreateWindow("COMP308 Assignment1");
 
     g_pGeometry = new Model;
-    g_pGeometry->CreateGeometry();
 
+    glClearColor(0.3, 0.3, 0.3, 1);
     glutDisplayFunc(PAE3D_Display);
     glutReshapeFunc(PAE3D_Reshape);
     glutMouseFunc(PAE3D_MouseClick);
     glutMotionFunc(PAE3D_MouseMove);
+    glutKeyboardFunc(PAE3D_KeyboardDown);
+    glutKeyboardUpFunc(PAE3D_KeyboardUp);
 
 	PAE3D_SetLight();
 	PAE3D_SetCamera();
@@ -55,9 +60,7 @@ void PAE3D_Display()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_COLOR_MATERIAL);
-
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glColor3f(1.0f,0.0f,0.0f); /* set object color as red */
 
 	g_pGeometry->RenderGeometry();
 
@@ -94,6 +97,20 @@ void PAE3D_SetLight()
 	glEnable(GL_LIGHT0);
 }
 
+void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
+	(void)x;
+	(void)y;
+	switch (key) {
+	}
+}
+
+void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
+	(void)x;
+	(void)y;
+	switch(key) {
+	}
+}
+
 void PAE3D_MouseClick(int button, int state, int x, int y){
 	lastX = x;
 	lastY = y;
@@ -101,21 +118,32 @@ void PAE3D_MouseClick(int button, int state, int x, int y){
 	switch (button) {
 	case GLUT_MIDDLE_BUTTON:
 		middleClickDown = state == GLUT_DOWN;
+		int sp = glutGetModifiers();
+		shiftKey = GLUT_ACTIVE_SHIFT & sp;
+		ctrlKey = GLUT_ACTIVE_CTRL & sp;
 		break;
 	}
 	glutPostRedisplay();
 }
 
 void PAE3D_MouseMove(int x, int y) {
+
+
 	if (middleClickDown) {
-		rotation += x - lastX;
-		tilt += y - lastY;
-	}
-	if (tilt > 85) {
-		tilt = 85;
-	}
-	if (tilt < -85) {
-		tilt = -85;
+		if (ctrlKey) {
+			zoom *= 1 + (y - lastY)*0.005;
+		} else if (shiftKey) {
+
+		} else {
+			rotation += x - lastX;
+			tilt += y - lastY;
+			if (tilt > 85) {
+				tilt = 85;
+			}
+			if (tilt < -85) {
+				tilt = -85;
+			}
+		}
 	}
 	lastX = x;
 	lastY = y;
