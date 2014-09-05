@@ -24,7 +24,9 @@ public:
 public:
 	PAE3D_Point TriangleNormal(PAE3D_Triangle);
 	PAE3D_Normal QuadNormal(PAE3D_Quad);
-	void RenderVertices(float zoom);
-	void RenderEdges(float zoom);
-	void RenderFaces();
+	PAE3D_Point QuadCenter(PAE3D_Quad q);
+	void RenderVertices(float);
+	void RenderEdges(float);
+	void RenderFaces(bool);
+	void RenderSelectedFacesHandle(float);
 };

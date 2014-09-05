@@ -54,7 +54,6 @@ struct PAE3D_UVcoord {
  * Same goes for (v2,n2,t2) etc.
  */
 struct PAE3D_Triangle {
-
 	unsigned int v1;
 	unsigned int v2;
 	unsigned int v3;
@@ -72,7 +71,7 @@ struct PAE3D_Edge {
 };
 
 struct PAE3D_Quad {
-
+	bool selected;
 	unsigned int n;
 	unsigned int v1;
 	unsigned int v2;

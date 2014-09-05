@@ -16,11 +16,11 @@ GLuint g_nWinWidth  = 640;
 GLuint g_nWinHeight = 480;
 Model* g_model = NULL;
 
-bool middleClickDown = false;
-int lastX, lastY = 0;
+bool q_middleClickDown = false;
+int g_lastX, g_lastY = 0;
 float rotation = 45, tilt = 30, zoom = 10;
 bool ctrlKey = false, shiftKey;
-PAE3D_Point center;
+PAE3D_Point g_center;
 
 void PAE3D_Display() ;
 void PAE3D_Reshape(int w, int h) ;
@@ -74,7 +74,11 @@ void PAE3D_Display() {
 
     Lights::SetLit(GL_LIGHT0);
 
-	g_model->RenderFaces();
+	g_model->RenderFaces(true);
+
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	g_model->RenderSelectedFacesHandle(zoom);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
@@ -109,12 +113,12 @@ void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
 }
 
 void PAE3D_MouseClick(int button, int state, int x, int y){
-	lastX = x;
-	lastY = y;
+	g_lastX = x;
+	g_lastY = y;
 
 	switch (button) {
 	case GLUT_MIDDLE_BUTTON:
-		middleClickDown = state == GLUT_DOWN;
+		q_middleClickDown = state == GLUT_DOWN;
 		int sp = glutGetModifiers();
 		shiftKey = GLUT_ACTIVE_SHIFT & sp;
 		ctrlKey = GLUT_ACTIVE_CTRL & sp;
@@ -124,17 +128,17 @@ void PAE3D_MouseClick(int button, int state, int x, int y){
 }
 
 void PAE3D_MouseMove(int x, int y) {
-	if (middleClickDown) {
+	if (q_middleClickDown) {
 		if (ctrlKey) {
-			zoom *= 1 + (y - lastY)*0.005;
+			zoom *= 1 + (y - g_lastY)*0.005;
 		} else if (shiftKey) {
 			int height = glutGet(GLUT_WINDOW_HEIGHT);
-			center.x += ((lastX-x)*cos(rotation*M_PI/180)+(y-lastY)*sin(tilt*M_PI/180)*sin(rotation*M_PI/180))*zoom/height/4;
-			center.y += (y-lastY)*cos(tilt*M_PI/180)*zoom/height/4;
-			center.z += ((lastX-x)*sin(rotation*M_PI/180)+(lastY-y)*sin(tilt*M_PI/180)*cos(rotation*M_PI/180))*zoom/height/4;
+			g_center.x += ((g_lastX-x)*cos(rotation*M_PI/180)+(y-g_lastY)*sin(tilt*M_PI/180)*sin(rotation*M_PI/180))*zoom/height/4;
+			g_center.y += (y-g_lastY)*cos(tilt*M_PI/180)*zoom/height/4;
+			g_center.z += ((g_lastX-x)*sin(rotation*M_PI/180)+(g_lastY-y)*sin(tilt*M_PI/180)*cos(rotation*M_PI/180))*zoom/height/4;
 		} else {
-			rotation += x - lastX;
-			tilt += y - lastY;
+			rotation += x - g_lastX;
+			tilt += y - g_lastY;
 			if (tilt > 85) {
 				tilt = 85;
 			}
@@ -143,8 +147,8 @@ void PAE3D_MouseMove(int x, int y) {
 			}
 		}
 	}
-	lastX = x;
-	lastY = y;
+	g_lastX = x;
+	g_lastY = y;
 	PAE3D_SetCamera();
 	glutPostRedisplay();
 }
@@ -157,11 +161,11 @@ void PAE3D_SetCamera()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	float xpos = -zoom*cos(tilt*M_PI/180)*sin(rotation*M_PI/180) + center.x;
-	float ypos = zoom*sin(tilt*M_PI/180) + center.y;
-	float zpos = zoom*cos(tilt*M_PI/180)*cos(rotation*M_PI/180) + center.z;
+	float xpos = -zoom*cos(tilt*M_PI/180)*sin(rotation*M_PI/180) + g_center.x;
+	float ypos = zoom*sin(tilt*M_PI/180) + g_center.y;
+	float zpos = zoom*cos(tilt*M_PI/180)*cos(rotation*M_PI/180) + g_center.z;
 
-	gluLookAt(xpos, ypos, zpos, center.x, center.y, center.z, 0, 1, 0);
+	gluLookAt(xpos, ypos, zpos, g_center.x, g_center.y, g_center.z, 0, 1, 0);
 }
 
 void PAE3D_RenderAxes() {

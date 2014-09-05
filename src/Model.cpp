@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <GL/glut.h>
+#include "Lights.h"
 
 #include <iostream>
 
@@ -17,7 +18,6 @@ Model::Model() {
 	m_pNormalArray = NULL;
 	m_pEdgeArray = NULL;
 	m_pQuadArray = NULL;
-
 
 	m_nNumPoint = 8;
 	m_pVertexArray = new PAE3D_Point[m_nNumPoint];
@@ -136,7 +136,10 @@ Model::Model() {
 
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pNormalArray[i] = QuadNormal(m_pQuadArray[i]);
+		m_pQuadArray[i].selected = false;
 	}
+	// FOR TESTING. to select a face while picking isnt implemented yet
+	//m_pQuadArray[3].selected = true;
 }
 
 Model::~Model(void) {
@@ -198,6 +201,14 @@ PAE3D_Normal Model::QuadNormal(PAE3D_Quad q) {
 	return n;
 }
 
+PAE3D_Point Model::QuadCenter(PAE3D_Quad q) {
+	PAE3D_Point center;
+	center.x = (m_pVertexArray[q.v1].x+m_pVertexArray[q.v2].x+m_pVertexArray[q.v3].x+m_pVertexArray[q.v4].x)/4;
+	center.y = (m_pVertexArray[q.v1].y+m_pVertexArray[q.v2].y+m_pVertexArray[q.v3].y+m_pVertexArray[q.v4].y)/4;
+	center.z = (m_pVertexArray[q.v1].z+m_pVertexArray[q.v2].z+m_pVertexArray[q.v3].z+m_pVertexArray[q.v4].z)/4;
+	return center;
+}
+
 void Model::RenderVertices(float zoom) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	glColor3f(0, 0, 0);
@@ -230,10 +241,15 @@ void Model::RenderEdges(float zoom) {
 		}
 }
 
-void Model::RenderFaces() {
+void Model::RenderFaces(bool highlightSelected) {
 	glBegin(GL_QUADS);
-	glColor3f(0.8, 0.77, 0.5);
 	for (int i = 0; i < m_nNumPolygon; i++) {
+		if (highlightSelected && m_pQuadArray[i].selected) {
+			glColor3f(0.5, 0.3, 0.5);
+		}
+		else {
+			glColor3f(0.8, 0.77, 0.5);
+		}
 		PAE3D_Quad quad = m_pQuadArray[i];
 		PAE3D_Point p = m_pVertexArray[quad.v1];
 		PAE3D_Normal n = m_pNormalArray[quad.n];
@@ -249,8 +265,81 @@ void Model::RenderFaces() {
 	glEnd();
 }
 
-
-
+void Model::RenderSelectedFacesHandle(float zoom) {
+	int count = 0;
+	PAE3D_Point center;
+	center.x = 0;
+	center.y = 0;
+	center.z = 0;
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		PAE3D_Quad quad = m_pQuadArray[i];
+		if (quad.selected) {
+			PAE3D_Point p = QuadCenter(quad);
+			center.x += p.x;
+			center.y += p.y;
+			center.z += p.z;
+			count++;
+		}
+	}
+	if (count > 0) {
+		center.x /= count;
+		center.y /= count;
+		center.z /= count;
+		int height = glutGet(GLUT_WINDOW_HEIGHT);
+		float width = 0.5/height* zoom;
+		float length = 20.0/height* zoom;
+		float square = length/2.0;
+		glColor3f(0, 1, 0);
+		glPushMatrix();
+			// X-Axis
+			glTranslatef(center.x, center.y, center.z);
+			glPushMatrix();
+				glRotatef(90, 0, 1, 0);
+				glColor3f(1, 0, 0);
+				Lights::SetUnlit(GL_LIGHT0);
+				glBegin(GL_QUADS);
+				glVertex3f(0, 0, 0);
+				glVertex3f(-square, 0, 0);
+				glVertex3f(-square, square, 0);
+				glVertex3f(0, square, 0);
+				glEnd();
+				Lights::SetLit(GL_LIGHT0);
+				gluCylinder(quadric, width, width, length, 20, 1);
+				glTranslatef(0, 0, length);
+				gluCylinder(quadric, width*4, 0, width*8, 20, 1);
+			glPopMatrix();
+			// Y-Axis
+			glPushMatrix();
+				glRotatef(90, -1, 0, 0);
+				glColor3f(0, 1, 0);
+				Lights::SetUnlit(GL_LIGHT0);
+				glBegin(GL_QUADS);
+				glVertex3f(0, 0, 0);
+				glVertex3f(square, 0, 0);
+				glVertex3f(square, -square, 0);
+				glVertex3f(0, -square, 0);
+				glEnd();
+				Lights::SetLit(GL_LIGHT0);
+				gluCylinder(quadric, width, width, length, 20, 1);
+				glTranslatef(0, 0, length);
+				gluCylinder(quadric, width*4, 0, width*8, 20, 1);
+			glPopMatrix();
+			// Z-Axis
+			glColor3f(0, 0, 1);
+			Lights::SetUnlit(GL_LIGHT0);
+			glBegin(GL_QUADS);
+			glVertex3f(0, 0, 0);
+			glVertex3f(square, 0, 0);
+			glVertex3f(square, square, 0);
+			glVertex3f(0, square, 0);
+			glEnd();
+			Lights::SetLit(GL_LIGHT0);
+			gluCylinder(quadric, width, width, length, 20, 1);
+			glTranslatef(0, 0, length);
+			gluCylinder(quadric, width*4, 0, width*8, 20, 1);
+		glPopMatrix();
+	}
+}
 
 
 
