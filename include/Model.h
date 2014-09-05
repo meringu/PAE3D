@@ -6,7 +6,7 @@
 class Model
 {
 public:
-	Model(float*z);
+	Model(void);
 	~Model(void);
 
 	// Array for Geometry
@@ -24,5 +24,7 @@ public:
 public:
 	PAE3D_Point TriangleNormal(PAE3D_Triangle);
 	PAE3D_Normal QuadNormal(PAE3D_Quad);
-	void RenderGeometry();
+	void RenderVertices(float zoom);
+	void RenderEdges(float zoom);
+	void RenderFaces();
 };
