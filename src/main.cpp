@@ -5,6 +5,7 @@
 #include <math.h>
 #include "define.h"
 #include "Model.h"
+#include "Lights.h"
 #include <iostream>
 
 using namespace std;
@@ -24,9 +25,6 @@ PAE3D_Point center;
 void PAE3D_Display() ;
 void PAE3D_Reshape(int w, int h) ;
 void PAE3D_SetCamera();
-void PAE3D_SetLight();
-void PAE3D_SetUnlit();
-void PAE3D_SetLit();
 void PAE3D_RenderAxes();
 void PAE3D_RenderGrid();
 void PAE3D_MouseClick(int button, int state, int x, int y);
@@ -51,7 +49,7 @@ int main(int argc, char** argv)
     glutKeyboardFunc(PAE3D_KeyboardDown);
     glutKeyboardUpFunc(PAE3D_KeyboardUp);
 
-	PAE3D_SetLight();
+    Lights::AddLight(GL_LIGHT0);
 	PAE3D_SetCamera();
 	glutMainLoop();
 
@@ -66,7 +64,7 @@ void PAE3D_Display() {
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glShadeModel(GL_SMOOTH);
 
-	PAE3D_SetUnlit();
+	Lights::SetUnlit(GL_LIGHT0);
 
 	PAE3D_RenderGrid();
     PAE3D_RenderAxes();
@@ -74,7 +72,7 @@ void PAE3D_Display() {
     g_model->RenderVertices(zoom);
     g_model->RenderEdges(zoom);
 
-    PAE3D_SetLit();
+    Lights::SetLit(GL_LIGHT0);
 
 	g_model->RenderFaces();
 
@@ -94,13 +92,6 @@ void PAE3D_Reshape(int w, int h) {
     glViewport(0, 0, g_nWinWidth, g_nWinHeight);
     PAE3D_SetCamera();
     glutPostRedisplay();
-}
-
-void PAE3D_SetLight() {
-	float direction[]	  = {0.0f, 0.0f, 1.0f, 0.0f};
-	glLightfv(GL_LIGHT0, GL_POSITION, direction);
-	PAE3D_SetLit();
-	glEnable(GL_LIGHT0);
 }
 
 void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
@@ -158,7 +149,6 @@ void PAE3D_MouseMove(int x, int y) {
 	glutPostRedisplay();
 }
 
-// Set Camera Position
 void PAE3D_SetCamera()
 {
 	glMatrixMode(GL_PROJECTION);
@@ -212,22 +202,6 @@ void PAE3D_RenderGrid() {
 			glVertex3f(-10 * level, 0, z * level);
 		}
 	}
-}
-
-void PAE3D_SetUnlit() {
-	float diffintensity[] = {0.0f, 0.0f, 0.0f, 1.0f};
-	float ambient[]       = {1.0f, 1.0f, 1.0f, 1.0f};
-
-	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffintensity);
-	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);
-}
-
-void PAE3D_SetLit() {
-	float diffintensity[] = {0.7f, 0.7f, 0.7f, 1.0f};
-	float ambient[]       = {0.2f, 0.2f, 0.2f, 1.0f};
-
-	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffintensity);
-	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);
 }
 
 
