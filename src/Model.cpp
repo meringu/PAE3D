@@ -356,7 +356,7 @@ void Model::RenderFaces(bool highlightSelected) {
 			glColor3f(0.5, 0.3, 0.5);
 		}
 		else {
-			glColor3f(0.8, 0.77, 0.5);
+			glColor3f(i/255.0f, 0.77, 0.5);
 		}
 		PAE3D_Quad quad = m_pQuadArray[i];
 		PAE3D_Point p = m_pVertexArray[quad.v1];
@@ -377,8 +377,7 @@ void Model::RenderPickerFaces() {
 	glBegin(GL_QUADS);
 	for (int i = 0; i < m_nNumPolygon; i++) {
 
-		glColor3f((1/256.0f)+(i)/256.0f, 0.5, 0.5);
-		//printf("%i %f \n",i,(i+0.5)/256.0f);
+			glColor3f(i/255.0f, 0.77, 0.5);
 
 		PAE3D_Quad quad = m_pQuadArray[i];
 		PAE3D_Point p = m_pVertexArray[quad.v1];
@@ -404,7 +403,6 @@ void Model::ProcessSelection(int cursorX, int cursorY){
 	glReadPixels(cursorX,viewport[3]-cursorY,1,1,GL_RGB,GL_UNSIGNED_BYTE,(void *)pixel);
 
 	printf("%d %d %d\n",pixel[0],pixel[1],pixel[2]);
-	printf("id %d \n", pixel[0]);
 	m_pQuadArray[pixel[0]].selected = true;
 
 }

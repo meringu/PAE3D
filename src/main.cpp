@@ -68,7 +68,7 @@ void PAE3D_Display() {
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glShadeModel(GL_SMOOTH);
 
-	Lights::SetUnlit(GL_LIGHT0);
+	//Lights::SetUnlit(GL_LIGHT0);
 	if (mode == RENDER) {
 		PAE3D_RenderGrid();
 		PAE3D_RenderAxes();
@@ -79,12 +79,16 @@ void PAE3D_Display() {
 		Lights::SetLit(GL_LIGHT0);
 
 		g_model->RenderFaces(true);
+		//g_model->ProcessSelection(g_lastX, g_lastY);
 	} else {
+		glDisable(GL_LIGHTING);
 		g_model->RenderPickerFaces();
+		g_model->ProcessSelection(g_lastX, g_lastY);
+		glEnable(GL_LIGHTING);
+
 	}
 
 	if (mode == SELECT) {
-		g_model->ProcessSelection(g_lastX, g_lastY);
 		mode = RENDER;
 		glutPostRedisplay();
 	} else {
@@ -146,6 +150,7 @@ void PAE3D_MouseClick(int button, int state, int x, int y){
 	{
 		q_leftClickDown = state == GLUT_UP;
 		mode = SELECT; //switch to select when picker is built.
+		//g_model->ProcessSelection(g_lastX, g_lastY);
 		break;
 	}
 	}
