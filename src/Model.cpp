@@ -131,7 +131,7 @@ Model::Model() {
 
 	// FOR TESTING. to select a face while picking isn't implemented yet
 	//m_pQuadArray[0].selected = true;
-	//m_pQuadArray[3].selected = true;
+	//m_pQuadArray[5].selected = true;
 }
 
 Model::~Model(void) {
@@ -371,6 +371,42 @@ void Model::RenderFaces(bool highlightSelected) {
 		glVertex3f(p.x, p.y, p.z);
 	}
 	glEnd();
+}
+
+void Model::RenderPickerFaces() {
+	glBegin(GL_QUADS);
+	for (int i = 0; i < m_nNumPolygon; i++) {
+
+		glColor3f((1/256.0f)+(i)/256.0f, 0.5, 0.5);
+		//printf("%i %f \n",i,(i+0.5)/256.0f);
+
+		PAE3D_Quad quad = m_pQuadArray[i];
+		PAE3D_Point p = m_pVertexArray[quad.v1];
+		PAE3D_Normal n = quad.n;
+		glNormal3f(n.x, n.y, n.z);
+		glVertex3f(p.x, p.y, p.z);
+		p = m_pVertexArray[quad.v2];
+		glVertex3f(p.x, p.y, p.z);
+		p = m_pVertexArray[quad.v3];
+		glVertex3f(p.x, p.y, p.z);
+		p = m_pVertexArray[quad.v4];
+		glVertex3f(p.x, p.y, p.z);
+	}
+	glEnd();
+}
+
+void Model::ProcessSelection(int cursorX, int cursorY){
+	GLint viewport[4];
+	GLubyte pixel[3];
+
+	glGetIntegerv(GL_VIEWPORT,viewport);
+
+	glReadPixels(cursorX,viewport[3]-cursorY,1,1,GL_RGB,GL_UNSIGNED_BYTE,(void *)pixel);
+
+	printf("%d %d %d\n",pixel[0],pixel[1],pixel[2]);
+	printf("id %d \n", pixel[0]);
+	m_pQuadArray[pixel[0]].selected = true;
+
 }
 
 void Model::RenderSelectedFacesHandle(float zoom) {

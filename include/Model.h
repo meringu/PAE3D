@@ -33,4 +33,6 @@ public:
 	void AddQuad(PAE3D_Quad);
 	void AddNormal();
 	unsigned int FindEdge(unsigned int, unsigned int);
+	void RenderPickerFaces();
+	void ProcessSelection(int,int);
 };

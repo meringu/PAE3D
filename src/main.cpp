@@ -15,8 +15,12 @@ GLuint g_mainWnd;
 GLuint g_nWinWidth  = PAE3D_WIN_WIDTH;
 GLuint g_nWinHeight = PAE3D_WIN_HEIGHT;
 Model* g_model = NULL;
+#define RENDER					1
+#define SELECT					2
 
+int mode = RENDER;
 bool q_middleClickDown = false;
+bool q_leftClickDown = false;
 int g_lastX, g_lastY = 0;
 float rotation = 45, tilt = 30, zoom = 10;
 bool ctrlKey = false, shiftKey;
@@ -65,26 +69,36 @@ void PAE3D_Display() {
 	glShadeModel(GL_SMOOTH);
 
 	Lights::SetUnlit(GL_LIGHT0);
+	if (mode == RENDER) {
+		PAE3D_RenderGrid();
+		PAE3D_RenderAxes();
 
-	PAE3D_RenderGrid();
-    PAE3D_RenderAxes();
+		g_model->RenderVertices(zoom);
+		g_model->RenderEdges(zoom);
 
-    g_model->RenderVertices(zoom);
-    g_model->RenderEdges(zoom);
+		Lights::SetLit(GL_LIGHT0);
 
-    Lights::SetLit(GL_LIGHT0);
+		g_model->RenderFaces(true);
+	} else {
+		g_model->RenderPickerFaces();
+	}
 
-	g_model->RenderFaces(true);
+	if (mode == SELECT) {
+		g_model->ProcessSelection(g_lastX, g_lastY);
+		mode = RENDER;
+		glutPostRedisplay();
+	} else {
 
-	glClear(GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 
-	g_model->RenderSelectedFacesHandle(zoom);
+		g_model->RenderSelectedFacesHandle(zoom);
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_COLOR_MATERIAL);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_COLOR_MATERIAL);
 
-	glutSwapBuffers();
+		glutSwapBuffers();
+	}
 }
 
 void PAE3D_Reshape(int w, int h) {
@@ -122,12 +136,18 @@ void PAE3D_MouseClick(int button, int state, int x, int y){
 	g_lastY = y;
 
 	switch (button) {
-	case GLUT_MIDDLE_BUTTON:
+	case GLUT_MIDDLE_BUTTON:{
 		q_middleClickDown = state == GLUT_DOWN;
 		int sp = glutGetModifiers();
 		shiftKey = GLUT_ACTIVE_SHIFT & sp;
 		ctrlKey = GLUT_ACTIVE_CTRL & sp;
+		break;}
+	case GLUT_LEFT_BUTTON:
+	{
+		q_leftClickDown = state == GLUT_UP;
+		mode = SELECT; //switch to select when picker is built.
 		break;
+	}
 	}
 	glutPostRedisplay();
 }
