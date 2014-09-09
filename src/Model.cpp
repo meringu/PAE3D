@@ -15,13 +15,12 @@ GLUquadric* quadric = gluNewQuadric();
 Model::Model() {
 
 	m_pVertexArray = NULL;
-	m_pNormalArray = NULL;
 	m_pEdgeArray = NULL;
 	m_pQuadArray = NULL;
 
 	m_nNumPoint = 8;
 	m_pVertexArray = new PAE3D_Point[m_nNumPoint];
-	m_pVertexArray[0].x = 0.5;
+	m_pVertexArray[0].x = 0.6;
 	m_pVertexArray[0].y = 0.5;
 	m_pVertexArray[0].z = 0.5;
 	m_pVertexArray[1].x = -0.5;
@@ -49,39 +48,35 @@ Model::Model() {
 	m_nNumPolygon = 6;
 	m_pQuadArray = new PAE3D_Quad[m_nNumPolygon];
 
-	m_nNumNormal = m_nNumPolygon;
-	m_pNormalArray = new PAE3D_Normal[m_nNumNormal];
-
 	m_pQuadArray[0].v1 = 0;
 	m_pQuadArray[0].v2 = 1;
 	m_pQuadArray[0].v3 = 2;
 	m_pQuadArray[0].v4 = 3;
-	m_pQuadArray[0].n = 0;
 	m_pQuadArray[1].v1 = 7;
 	m_pQuadArray[1].v2 = 6;
 	m_pQuadArray[1].v3 = 5;
 	m_pQuadArray[1].v4 = 4;
-	m_pQuadArray[1].n = 1;
 	m_pQuadArray[2].v1 = 1;
 	m_pQuadArray[2].v2 = 5;
 	m_pQuadArray[2].v3 = 6;
 	m_pQuadArray[2].v4 = 2;
-	m_pQuadArray[2].n = 2;
 	m_pQuadArray[3].v1 = 4;
 	m_pQuadArray[3].v2 = 0;
 	m_pQuadArray[3].v3 = 3;
 	m_pQuadArray[3].v4 = 7;
-	m_pQuadArray[3].n = 3;
 	m_pQuadArray[4].v1 = 4;
 	m_pQuadArray[4].v2 = 5;
 	m_pQuadArray[4].v3 = 1;
 	m_pQuadArray[4].v4 = 0;
-	m_pQuadArray[4].n = 4;
 	m_pQuadArray[5].v1 = 3;
 	m_pQuadArray[5].v2 = 2;
 	m_pQuadArray[5].v3 = 6;
 	m_pQuadArray[5].v4 = 7;
-	m_pQuadArray[5].n = 5;
+
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pQuadArray[i].n = QuadNormal(m_pQuadArray[i]);
+		m_pQuadArray[i].selected = false;
+	}
 
 	m_nNumEdge = 12;
 	m_pEdgeArray = new PAE3D_Edge[m_nNumEdge];
@@ -134,19 +129,14 @@ Model::Model() {
 	e11.v2 = 7;
 	m_pEdgeArray[11] = e11;
 
-	for (int i = 0; i < m_nNumPolygon; i++) {
-		m_pNormalArray[i] = QuadNormal(m_pQuadArray[i]);
-		m_pQuadArray[i].selected = false;
-	}
-	// FOR TESTING. to select a face while picking isnt implemented yet
+	// FOR TESTING. to select a face while picking isn't implemented yet
+	//m_pQuadArray[0].selected = true;
 	//m_pQuadArray[3].selected = true;
 }
 
 Model::~Model(void) {
 	if (m_pVertexArray != NULL)
 		delete[] m_pVertexArray;
-	if (m_pNormalArray != NULL)
-		delete[] m_pNormalArray;
 	if (m_pEdgeArray != NULL)
 		delete[] m_pEdgeArray;
 	if (m_pQuadArray != NULL)
@@ -209,6 +199,106 @@ PAE3D_Point Model::QuadCenter(PAE3D_Quad q) {
 	return center;
 }
 
+void Model::AddEdge(PAE3D_Edge edge) {
+	m_nNumEdge++;
+	PAE3D_Edge* temp = new PAE3D_Edge[m_nNumEdge];
+	for (int i = 0; i < m_nNumEdge-1; i++) {
+		temp[i] = m_pEdgeArray[i];
+	}
+	temp[m_nNumEdge-1] = edge;
+	delete(m_pEdgeArray);
+	m_pEdgeArray = temp;
+}
+
+void Model::AddVertex(PAE3D_Point point) {
+	m_nNumPoint++;
+	PAE3D_Point* temp = new PAE3D_Point[m_nNumPoint];
+	for (int i = 0; i < m_nNumPoint-1; i++) {
+		temp[i] = m_pVertexArray[i];
+	}
+	temp[m_nNumPoint-1] = point;
+	delete(m_pVertexArray);
+	m_pVertexArray = temp;
+}
+
+void Model::AddQuad(PAE3D_Quad quad) {
+	m_nNumPolygon++;
+	PAE3D_Quad* temp = new PAE3D_Quad[m_nNumPolygon];
+	for (int i = 0; i < m_nNumPolygon-1; i++) {
+		temp[i] = m_pQuadArray[i];
+	}
+	temp[m_nNumPolygon-1] = quad;
+	delete(m_pQuadArray);
+	m_pQuadArray = temp;
+}
+
+void Model::Smooth() {
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		PAE3D_Quad q = m_pQuadArray[i];
+		PAE3D_Point v1 = m_pVertexArray[q.v1];
+		PAE3D_Point v2 = m_pVertexArray[q.v2];
+		PAE3D_Point v3 = m_pVertexArray[q.v3];
+		PAE3D_Point v4 = m_pVertexArray[q.v4];
+		PAE3D_Point p;
+		p.x = (v1.x + v2.x + v3.x + v4.x) / 4;
+		p.y = (v1.y + v2.y + v3.y + v4.y) / 4;
+		p.z = (v1.z + v2.z + v3.z + v4.z) / 4;
+		q.c = m_nNumPoint;
+		AddVertex(p);
+	}
+	for (int i = 0; i < m_nNumEdge; i++) {
+		PAE3D_Edge e = m_pEdgeArray[i];
+		PAE3D_Point v1 = m_pVertexArray[e.v1];
+		PAE3D_Point v2 = m_pVertexArray[e.v2];
+		PAE3D_Point p;
+		p.x = (v1.x + v2.x) / 2;
+		p.y = (v1.y + v2.y) / 2;
+		p.z = (v1.z + v2.z) / 2;
+		e.c = m_nNumPoint;
+		AddVertex(p);
+	}
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		PAE3D_Quad q = m_pQuadArray[i];
+		int ei1 = FindEdge(q.v1, q.v2);
+		int ei2 = FindEdge(q.v2, q.v3);
+		int ei3 = FindEdge(q.v3, q.v4);
+		int ei4 = FindEdge(q.v4, q.v1);
+		PAE3D_Edge e1;
+		e1.v1 = q.c;
+		e1.v2 = m_pEdgeArray[ei1].c;
+		e1.c = 0;
+		PAE3D_Edge e2;
+		e2.v1 = q.c;
+		e2.v2 = m_pEdgeArray[ei1].c;
+		e2.c = 0;
+		PAE3D_Edge e3;
+		e3.v1 = q.c;
+		e3.v2 = m_pEdgeArray[ei1].c;
+		e3.c = 0;
+		PAE3D_Edge e4;
+		e4.v1 = q.c;
+		e4.v2 = m_pEdgeArray[ei1].c;
+		e4.c = 0;
+		/*AddEdge(e1);
+		AddEdge(e2);
+		AddEdge(e3);
+		AddEdge(e4);*/
+		/*m_pQuadArray[i].v3 = facePoints[i];
+		m_pQuadArray[i].v2 = edgePoints[FindEdge(m_pQuadArray[i].v1, m_pQuadArray[i].v2)];
+		m_pQuadArray[i].v4 = edgePoints[FindEdge(m_pQuadArray[i].v4, m_pQuadArray[i].v1)];*/
+	}
+}
+
+unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
+	for (int i = 0; i < m_nNumEdge; i++) {
+		if (m_pEdgeArray[i].v1 == v1 && m_pEdgeArray[i].v2 == v2
+				|| m_pEdgeArray[i].v2 == v1 && m_pEdgeArray[i].v2 == v1) {
+			return i;
+		}
+	}
+	return 0;
+}
+
 void Model::RenderVertices(float zoom) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	glColor3f(0, 0, 0);
@@ -224,21 +314,39 @@ void Model::RenderVertices(float zoom) {
 void Model::RenderEdges(float zoom) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	glColor3f(0, 0, 0);
-		for (int i = 0; i < m_nNumEdge; i++) {
-			PAE3D_Edge edge = m_pEdgeArray[i];
-			PAE3D_Point p1 = m_pVertexArray[edge.v1];
-			PAE3D_Point p2 = m_pVertexArray[edge.v2];
-			glPushMatrix();
-			glTranslatef(p1.x, p1.y, p1.z);
-			float length = sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y)+(p1.z-p2.z)*(p1.z-p2.z));
-			float x = (p1.y-p2.y) * 1;
-			float y = -(p1.x-p2.x)* 1;
-			float z = 0;
-			float angle = acos(-(p1.z-p2.z)) * 180 / M_PI;
-			glRotatef(angle, x, y, z);
-			gluCylinder(quadric, 0.5/height* zoom, 0.5/height* zoom, length, 20, 1);
-			glPopMatrix();
-		}
+	for (int i = 0; i < m_nNumEdge; i++) {
+		PAE3D_Edge edge = m_pEdgeArray[i];
+		PAE3D_Point p1 = m_pVertexArray[edge.v1];
+		PAE3D_Point p2 = m_pVertexArray[edge.v2];
+		glPushMatrix();
+		glTranslatef(p2.x, p2.y, p2.z);
+		float length = sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y)+(p1.z-p2.z)*(p1.z-p2.z));
+		PAE3D_Point t;
+		PAE3D_Point v1;
+		PAE3D_Point v2;
+		v1.x = 0;
+		v1.y = 0;
+		v1.z = 1;
+		v2.x = (p1.x - p2.x)/length;
+		v2.y = (p1.y - p2.y)/length;
+		v2.z = (p1.z - p2.z)/length;
+		float dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+		float crossX = v1.y * v2.x - v2.y * v1.z;
+		float crossY = (v1.z * v2.x - v2.z * v1.x);
+		float crossZ = v1.x * v2.y - v2.x * v1.y;
+		t.x = crossX;
+		t.y = crossY;
+		t.z = crossZ;
+		float tLength = sqrt(t.x*t.x+t.y*t.y+t.z*t.z);
+		t.x /= tLength;
+		t.y /= tLength;
+		t.z /= tLength;
+		float angle = acos(dot);
+		angle = angle * 180 / M_PI;
+		glRotatef(angle, t.x, t.y, t.z);
+		gluCylinder(quadric, 0.5 / height * zoom, 0.5 / height * zoom, length, 20, 1);
+		glPopMatrix();
+	}
 }
 
 void Model::RenderFaces(bool highlightSelected) {
@@ -252,7 +360,7 @@ void Model::RenderFaces(bool highlightSelected) {
 		}
 		PAE3D_Quad quad = m_pQuadArray[i];
 		PAE3D_Point p = m_pVertexArray[quad.v1];
-		PAE3D_Normal n = m_pNormalArray[quad.n];
+		PAE3D_Normal n = quad.n;
 		glNormal3f(n.x, n.y, n.z);
 		glVertex3f(p.x, p.y, p.z);
 		p = m_pVertexArray[quad.v2];

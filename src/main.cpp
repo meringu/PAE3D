@@ -12,8 +12,8 @@ using namespace std;
 
 // Global Variables
 GLuint g_mainWnd;
-GLuint g_nWinWidth  = 640;
-GLuint g_nWinHeight = 480;
+GLuint g_nWinWidth  = PAE3D_WIN_WIDTH;
+GLuint g_nWinHeight = PAE3D_WIN_HEIGHT;
 Model* g_model = NULL;
 
 bool q_middleClickDown = false;
@@ -102,7 +102,11 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	(void)x;
 	(void)y;
 	switch (key) {
+	case ' ':
+		g_model->Smooth();
+		break;
 	}
+	glutPostRedisplay();
 }
 
 void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
@@ -110,6 +114,7 @@ void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
 	(void)y;
 	switch(key) {
 	}
+	glutPostRedisplay();
 }
 
 void PAE3D_MouseClick(int button, int state, int x, int y){
