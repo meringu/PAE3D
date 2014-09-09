@@ -356,7 +356,7 @@ void Model::RenderFaces(bool highlightSelected) {
 			glColor3f(0.5, 0.3, 0.5);
 		}
 		else {
-			glColor3f(i/255.0f, 0.77, 0.5);
+			glColor3f(0.77, 0.77, 0.5);
 		}
 		PAE3D_Quad quad = m_pQuadArray[i];
 		PAE3D_Point p = m_pVertexArray[quad.v1];
