@@ -23,6 +23,7 @@ struct PAE3D_Point {
 	float x;
 	float y;
 	float z;
+	bool selected;
 };
 
 struct vec4{
