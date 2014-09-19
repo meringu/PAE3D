@@ -13,6 +13,7 @@ int numVert, numNorm, numUV, numFace;
 GLUquadric* quadric = gluNewQuadric();
 
 Model::Model() {
+	SelectedHandle = PAE3D_SELECT_NO_HANDLE;
 	m_SelectMode = PAE3D_SELECT_FACES;
 	m_hasSelected = false;
 	picking = false;
@@ -91,9 +92,7 @@ Model::Model() {
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pPolyArray[i].selected = false;
 		m_pPolyArray[i].vertexCount = 4;
-		m_pPolyArray[i].n.x = 0;
-		m_pPolyArray[i].n.y = 0;
-		m_pPolyArray[i].n.z = 1;
+		m_pPolyArray[i].n = PolyNormal(i);
 	}
 
 	m_nNumEdge = 12;
@@ -164,59 +163,57 @@ Model::~Model(void) {
 		delete[] m_pPolyArray;
 }
 
-PAE3D_Normal Model::TriangleNormal(PAE3D_Triangle t) {
-	PAE3D_Normal u;
-	u.x = m_pVertexArray[t.v2].x - m_pVertexArray[t.v1].x;
-	u.y = m_pVertexArray[t.v2].y - m_pVertexArray[t.v1].y;
-	u.z = m_pVertexArray[t.v2].z - m_pVertexArray[t.v1].z;
-	PAE3D_Normal v;
-	v.x = m_pVertexArray[t.v3].x - m_pVertexArray[t.v1].x;
-	v.y = m_pVertexArray[t.v3].y - m_pVertexArray[t.v1].y;
-	v.z = m_pVertexArray[t.v3].z - m_pVertexArray[t.v1].z;
-	PAE3D_Normal n;
-	n.x = u.y * v.z - u.z * v.y;
-	n.y = u.z * v.x - u.x * v.z;
-	n.z = u.x * v.y - u.y * v.x;
-	float m = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
-	n.x /= m;
-	n.y /= m;
-	n.z /= m;
-	return n;
+PAE3D_Normal Model::PolyNormal(int p) {
+	PAE3D_Polygon poly = m_pPolyArray[p];
+	PAE3D_Normal normal;
+	normal.x = 0;
+	normal.y = 0;
+	normal.z = 0;
+	for (int i = 0; i < poly.vertexCount; i++) {
+		int p1 = poly.vertices[i];
+		int p2 = poly.vertices[(i+1)%poly.vertexCount];
+		int p3 = poly.vertices[(i+2)%poly.vertexCount];
+		PAE3D_Normal u;
+		u.x = m_pVertexArray[p2].x - m_pVertexArray[p1].x;
+		u.y = m_pVertexArray[p2].y - m_pVertexArray[p1].y;
+		u.z = m_pVertexArray[p2].z - m_pVertexArray[p1].z;
+		PAE3D_Normal v;
+		v.x = m_pVertexArray[p3].x - m_pVertexArray[p1].x;
+		v.y = m_pVertexArray[p3].y - m_pVertexArray[p1].y;
+		v.z = m_pVertexArray[p3].z - m_pVertexArray[p1].z;
+		PAE3D_Normal n;
+		n.x = u.y * v.z - u.z * v.y;
+		n.y = u.z * v.x - u.x * v.z;
+		n.z = u.x * v.y - u.y * v.x;
+		float m = sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
+		n.x /= m;
+		n.y /= m;
+		n.z /= m;
+		normal.x += n.x;
+		normal.y += n.y;
+		normal.z += n.z;
+	}
+	float m = sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
+	normal.x /= m;
+	normal.y /= m;
+	normal.z /= m;
+	return normal;
 }
 
-PAE3D_Normal Model::QuadNormal(PAE3D_Quad q) {
-	PAE3D_Triangle t;
-	t.v1 = q.v1;
-	t.v2 = q.v2;
-	t.v3 = q.v3;
-	PAE3D_Normal n1 = TriangleNormal(t);
-	t.v1 = q.v2;
-	t.v2 = q.v3;
-	t.v3 = q.v4;
-	PAE3D_Normal n2 = TriangleNormal(t);
-	t.v1 = q.v3;
-	t.v2 = q.v4;
-	t.v3 = q.v1;
-	PAE3D_Normal n3 = TriangleNormal(t);
-	t.v1 = q.v4;
-	t.v2 = q.v1;
-	t.v3 = q.v2;
-	PAE3D_Normal n4 = TriangleNormal(t);
-	PAE3D_Normal n;
-	n.x = n1.x + n2.x + n3.x + n4.x;
-	n.x /= 4;
-	n.y = n1.y + n2.y + n3.y + n4.y;
-	n.y /= 4;
-	n.z = n1.z + n2.z + n3.z + n4.z;
-	n.z /= 4;
-	return n;
-}
-
-PAE3D_Point Model::QuadCenter(PAE3D_Quad q) {
+PAE3D_Point Model::PolyCenter(int p) {
+	PAE3D_Polygon poly = m_pPolyArray[p];
 	PAE3D_Point center;
-	center.x = (m_pVertexArray[q.v1].x+m_pVertexArray[q.v2].x+m_pVertexArray[q.v3].x+m_pVertexArray[q.v4].x)/4;
-	center.y = (m_pVertexArray[q.v1].y+m_pVertexArray[q.v2].y+m_pVertexArray[q.v3].y+m_pVertexArray[q.v4].y)/4;
-	center.z = (m_pVertexArray[q.v1].z+m_pVertexArray[q.v2].z+m_pVertexArray[q.v3].z+m_pVertexArray[q.v4].z)/4;
+	center.x = 0;
+	center.y = 0;
+	center.z = 0;
+	for (int i = 0; i < poly.vertexCount; i++) {
+		center.x = m_pVertexArray[poly.vertices[i]].x;
+		center.y = m_pVertexArray[poly.vertices[i]].y;
+		center.z = m_pVertexArray[poly.vertices[i]].z;
+	}
+	center.x /= poly.vertexCount;
+	center.y /= poly.vertexCount;
+	center.z /= poly.vertexCount;
 	return center;
 }
 
@@ -242,16 +239,16 @@ void Model::AddVertex(PAE3D_Point point) {
 	m_pVertexArray = temp;
 }
 
-/*void Model::AddQuad(PAE3D_Quad quad) {
+void Model::AddPoly(PAE3D_Polygon quad) {
 	m_nNumPolygon++;
-	PAE3D_Quad* temp = new PAE3D_Quad[m_nNumPolygon];
+	PAE3D_Polygon* temp = new PAE3D_Polygon[m_nNumPolygon];
 	for (int i = 0; i < m_nNumPolygon-1; i++) {
-		temp[i] = m_pQuadArray[i];
+		temp[i] = m_pPolyArray[i];
 	}
 	temp[m_nNumPolygon-1] = quad;
-	delete(m_pQuadArray);
-	m_pQuadArray = temp;
-}*/
+	delete(m_pPolyArray);
+	m_pPolyArray = temp;
+}
 
 void Model::Smooth() {
 	/*for (int i = 0; i < m_nNumPolygon; i++) {
@@ -464,20 +461,19 @@ void Model::RenderPicker(float zoom) {
 		break;
 	}
 	if (m_hasSelected) {
-				glClear(GL_DEPTH_BUFFER_BIT);
-				int height = glutGet(GLUT_WINDOW_HEIGHT);
-				float width = 0.5 / height * zoom;
-				float length = 20.0 / height * zoom;
-				glPushMatrix();
-					glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
-					glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
-					Handle::RenderXHandle(quadric, width, length);
-					glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
-					Handle::RenderYHandle(quadric, width, length);
-					glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
-					Handle::RenderZHandle(quadric, width, length);
-				glPopMatrix();
-			}
+		glClear(GL_DEPTH_BUFFER_BIT);
+		float width = 0.5 / height * zoom;
+		float length = 20.0 / height * zoom;
+		glPushMatrix();
+			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
+			glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
+			Handle::RenderXHandle(quadric, width, length);
+			glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
+			Handle::RenderYHandle(quadric, width, length);
+			glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
+			Handle::RenderZHandle(quadric, width, length);
+		glPopMatrix();
+	}
 	picking = false;
 }
 

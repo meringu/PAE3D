@@ -29,9 +29,8 @@ public:
 	int SelectedHandle;
 	Model(void);
 	~Model(void);
-	PAE3D_Point TriangleNormal(PAE3D_Triangle);
-	PAE3D_Normal QuadNormal(PAE3D_Quad);
-	PAE3D_Point QuadCenter(PAE3D_Quad);
+	PAE3D_Normal PolyNormal(int);
+	PAE3D_Point PolyCenter(int);
 	void MoveSelected(float, float, float);
 	void DeselectEverything();
 	void RenderVertices(float);
@@ -41,7 +40,7 @@ public:
 	void Smooth();
 	void AddVertex(PAE3D_Point);
 	void AddEdge(PAE3D_Edge);
-	void AddQuad(PAE3D_Quad);
+	void AddPoly(PAE3D_Polygon);
 	void AddNormal();
 	unsigned int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float);
