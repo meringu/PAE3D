@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
     glutKeyboardUpFunc(PAE3D_KeyboardUp);
     PAE3D_SetLights();
 	PAE3D_SetCamera();
+
 	glutMainLoop();
     return 0;
 }
@@ -118,6 +119,15 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	switch (key) {
 	case ' ':
 		g_model->Smooth();
+		break;
+	case 'f':
+		g_model->SetSelectType(PAE3D_SELECT_FACES);
+		break;
+	case 'v':
+		g_model->SetSelectType(PAE3D_SELECT_VERTICES);
+		break;
+	case 'e':
+		g_model->SetSelectType(PAE3D_SELECT_EDGES);
 		break;
 	}
 	glutPostRedisplay();

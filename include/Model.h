@@ -3,7 +3,7 @@
 #include "define.h"
 #include <GL/glut.h>
 #define PAE3D_SELECT_DISABLE 0
-#define PAE3D_SELECT_VERICES 1
+#define PAE3D_SELECT_VERTICES 1
 #define PAE3D_SELECT_EDGES 2
 #define PAE3D_SELECT_FACES 3
 #define PAE3D_SELECT_NO_HANDLE -1
@@ -24,6 +24,7 @@ private:
 	PAE3D_Point m_selectedCenter;
 	int m_SelectMode;
 	bool m_hasSelected;
+	bool picking;
 public:
 	int SelectedHandle;
 	Model(void);
@@ -44,4 +45,8 @@ public:
 	unsigned int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float);
 	void ProcessSelection(int, int, bool, bool);
+	void SetSelectType(int);
+	void CascadeFaceSelection(int);
+	void CascadeEdgeSelection(int);
+	void CheckSelection();
 };
