@@ -450,30 +450,26 @@ void Model::PAE3D_PrintEdge(PAE3D_Edge e) {
 }
 
 void Model::MoveSelected(float dx, float dy, float dz) {
-		for (int i = 0; i < m_nNumPoint; i++) {
-			if (m_pVertexArray[i].selected) {
-				m_pVertexArray[i].x += dx;
-				m_pVertexArray[i].y += dy;
-				m_pVertexArray[i].z += dz;
-			}
-		}
-
-	int count = 0;
-	m_selectedCenter.x = 0;
-	m_selectedCenter.y = 0;
-	m_selectedCenter.z = 0;
 	for (int i = 0; i < m_nNumPoint; i++) {
-		PAE3D_Point p = m_pVertexArray[i];
-		if (p.selected) {
-			m_selectedCenter.x += p.x;
-			m_selectedCenter.y += p.y;
-			m_selectedCenter.z += p.z;
-			count++;
+		if (m_pVertexArray[i].selected) {
+			m_pVertexArray[i].x += dx;
+			m_pVertexArray[i].y += dy;
+			m_pVertexArray[i].z += dz;
 		}
 	}
-	m_selectedCenter.x /= count;
-	m_selectedCenter.y /= count;
-	m_selectedCenter.z /= count;
+	m_selectedCenter.x += dx;
+	m_selectedCenter.y += dy;
+	m_selectedCenter.z += dz;
+}
+
+void Model::ScaleSelected(float dx, float dy, float dz) {
+	for (int i = 0; i < m_nNumPoint; i++) {
+		if (m_pVertexArray[i].selected) {
+			m_pVertexArray[i].x += dx * (m_pVertexArray[i].x - m_selectedCenter.x);
+			m_pVertexArray[i].y += dy * (m_pVertexArray[i].y - m_selectedCenter.y);
+			m_pVertexArray[i].z += dz * (m_pVertexArray[i].z - m_selectedCenter.z);
+		}
+	}
 }
 
 unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
@@ -588,7 +584,7 @@ void Model::RenderFaces() {
 	}
 }
 
-void Model::RenderPicker(float zoom) {
+void Model::RenderPicker(float zoom, int handleMode) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	picking = true;
 	switch (m_SelectMode) {
@@ -608,12 +604,24 @@ void Model::RenderPicker(float zoom) {
 		float length = 20.0 / height * zoom;
 		glPushMatrix();
 			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
-			glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
-			Handle::RenderXHandle(quadric, width, length);
-			glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
-			Handle::RenderYHandle(quadric, width, length);
-			glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
-			Handle::RenderZHandle(quadric, width, length);
+			switch(handleMode){
+			case PAE3D_HANLE_MOVE:
+				glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
+				Handle::RenderXHandleMove(quadric, width, length);
+				glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
+				Handle::RenderYHandleMove(quadric, width, length);
+				glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
+				Handle::RenderZHandleMove(quadric, width, length);
+				break;
+			case PAE3D_HANLE_SCALE:
+				glColor3f(PAE3D_SELECT_X_HANDLE / 255.0, 0, 0);
+				Handle::RenderXHandleScale(quadric, width, length);
+				glColor3f(PAE3D_SELECT_Y_HANDLE / 255.0, 0, 0);
+				Handle::RenderYHandleScale(quadric, width, length);
+				glColor3f(PAE3D_SELECT_Z_HANDLE / 255.0, 0, 0);
+				Handle::RenderZHandleScale(quadric, width, length);
+				break;
+			}
 		glPopMatrix();
 	}
 	picking = false;
@@ -790,19 +798,32 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 	}
 }
 
-void Model::RenderSelectedFacesHandle(float zoom) {
+void Model::RenderSelectedFacesHandle(float zoom, int handleMode) {
 	if (m_hasSelected) {
 		int height = glutGet(GLUT_WINDOW_HEIGHT);
 		float width = 0.5/height* zoom;
 		float length = 20.0/height* zoom;
 		glPushMatrix();
-			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
-			glColor3f(1, 0, 0);
-			Handle::RenderXHandle(quadric, width, length);
-			glColor3f(0, 1, 0);
-			Handle::RenderYHandle(quadric, width, length);
-			glColor3f(0, 0, 1);
-			Handle::RenderZHandle(quadric, width, length);
+			switch(handleMode) {
+			case PAE3D_HANLE_MOVE:
+				glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
+				glColor3f(1, 0, 0);
+				Handle::RenderXHandleMove(quadric, width, length);
+				glColor3f(0, 1, 0);
+				Handle::RenderYHandleMove(quadric, width, length);
+				glColor3f(0, 0, 1);
+				Handle::RenderZHandleMove(quadric, width, length);
+				break;
+			case PAE3D_HANLE_SCALE:
+				glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
+				glColor3f(1, 0, 0);
+				Handle::RenderXHandleScale(quadric, width, length);
+				glColor3f(0, 1, 0);
+				Handle::RenderYHandleScale(quadric, width, length);
+				glColor3f(0, 0, 1);
+				Handle::RenderZHandleScale(quadric, width, length);
+				break;
+			}
 		glPopMatrix();
 	}
 }

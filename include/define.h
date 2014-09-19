@@ -11,6 +11,9 @@
 #define PAE3D_ZNEAR_2D	-50.0
 #define PAE3D_ZFAR_2D	50.0
 
+#define PAE3D_HANLE_MOVE 0
+#define PAE3D_HANLE_SCALE 1
+
 struct PAE3D_Point {
 	float x;
 	float y;

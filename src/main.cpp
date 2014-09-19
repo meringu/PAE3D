@@ -17,6 +17,8 @@ Model* g_model = NULL;
 #define PAE3D_SELECT_RIGHT 2
 #define PAE3D_SELECT_LEFT 3
 
+int handleMode = PAE3D_HANLE_MOVE;
+
 int mode = PAE3D_RENDER;
 bool q_middleClickDown = false;
 bool q_leftClickDown = false;
@@ -75,13 +77,13 @@ void PAE3D_Display() {
 		break;
 	case PAE3D_SELECT_RIGHT:
 		glDisable(GL_LIGHTING);
-		g_model->RenderPicker(zoom);
+		g_model->RenderPicker(zoom, handleMode);
 		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, false);
 		glEnable(GL_LIGHTING);
 		break;
 	case PAE3D_SELECT_LEFT:
 		glDisable(GL_LIGHTING);
-		g_model->RenderPicker(zoom);
+		g_model->RenderPicker(zoom, handleMode);
 		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, true);
 		glEnable(GL_LIGHTING);
 		break;
@@ -91,7 +93,7 @@ void PAE3D_Display() {
 		glutPostRedisplay();
 	} else {
 		glClear(GL_DEPTH_BUFFER_BIT);
-		g_model->RenderSelectedFacesHandle(zoom);
+		g_model->RenderSelectedFacesHandle(zoom, handleMode);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_COLOR_MATERIAL);
@@ -128,6 +130,12 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'e':
 		g_model->SetSelectType(PAE3D_SELECT_EDGES);
+		break;
+	case 'm':
+		handleMode = PAE3D_HANLE_MOVE;
+		break;
+	case 's':
+		handleMode = PAE3D_HANLE_SCALE;
 		break;
 	}
 	glutPostRedisplay();
@@ -198,15 +206,32 @@ void PAE3D_MouseMove(int x, int y) {
 		}
 	}
 	if (q_leftClickDown) {
-		switch (g_model->SelectedHandle) {
-		case PAE3D_SELECT_X_HANDLE:
-			g_model->MoveSelected(-worldDX*2, 0, 0);
+		switch(handleMode) {
+		case PAE3D_HANLE_MOVE:
+			switch (g_model->SelectedHandle) {
+			case PAE3D_SELECT_X_HANDLE:
+				g_model->MoveSelected(-worldDX * 2, 0, 0);
+				break;
+			case PAE3D_SELECT_Y_HANDLE:
+				g_model->MoveSelected(0, -worldDY * 2, 0);
+				break;
+			case PAE3D_SELECT_Z_HANDLE:
+				g_model->MoveSelected(0, 0, -worldDZ * 2);
+				break;
+			}
 			break;
-		case PAE3D_SELECT_Y_HANDLE:
-			g_model->MoveSelected(0, -worldDY*2, 0);
-			break;
-		case PAE3D_SELECT_Z_HANDLE:
-			g_model->MoveSelected(0, 0, -worldDZ*2);
+		case PAE3D_HANLE_SCALE:
+			switch (g_model->SelectedHandle) {
+			case PAE3D_SELECT_X_HANDLE:
+				g_model->ScaleSelected(-worldDX * 2 / zoom * 10, 0, 0);
+				break;
+			case PAE3D_SELECT_Y_HANDLE:
+				g_model->ScaleSelected(0, -worldDY * 2 / zoom * 10, 0);
+				break;
+			case PAE3D_SELECT_Z_HANDLE:
+				g_model->ScaleSelected(0, 0, -worldDZ * 2 / zoom * 10);
+				break;
+			}
 			break;
 		}
 	}
