@@ -3,7 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include <GL/glut.h>
-//#include "Lights.h"
 #include "Handle.h"
 
 #include <iostream>
@@ -20,7 +19,7 @@ Model::Model() {
 
 	m_pVertexArray = NULL;
 	m_pEdgeArray = NULL;
-	m_pQuadArray = NULL;
+	m_pPolyArray= NULL;
 
 	m_nNumPoint = 8;
 	m_pVertexArray = new PAE3D_Point[m_nNumPoint];
@@ -50,36 +49,51 @@ Model::Model() {
 	m_pVertexArray[7].z = -0.5;
 
 	m_nNumPolygon = 6;
-	m_pQuadArray = new PAE3D_Quad[m_nNumPolygon];
+	m_pPolyArray = new PAE3D_Polygon[m_nNumPolygon];
 
-	m_pQuadArray[0].v1 = 0;
-	m_pQuadArray[0].v2 = 1;
-	m_pQuadArray[0].v3 = 2;
-	m_pQuadArray[0].v4 = 3;
-	m_pQuadArray[1].v1 = 7;
-	m_pQuadArray[1].v2 = 6;
-	m_pQuadArray[1].v3 = 5;
-	m_pQuadArray[1].v4 = 4;
-	m_pQuadArray[2].v1 = 1;
-	m_pQuadArray[2].v2 = 5;
-	m_pQuadArray[2].v3 = 6;
-	m_pQuadArray[2].v4 = 2;
-	m_pQuadArray[3].v1 = 4;
-	m_pQuadArray[3].v2 = 0;
-	m_pQuadArray[3].v3 = 3;
-	m_pQuadArray[3].v4 = 7;
-	m_pQuadArray[4].v1 = 4;
-	m_pQuadArray[4].v2 = 5;
-	m_pQuadArray[4].v3 = 1;
-	m_pQuadArray[4].v4 = 0;
-	m_pQuadArray[5].v1 = 3;
-	m_pQuadArray[5].v2 = 2;
-	m_pQuadArray[5].v3 = 6;
-	m_pQuadArray[5].v4 = 7;
+	unsigned int* points = new unsigned int[4];
+	points[0] = 0;
+	points[1] = 1;
+	points[2] = 2;
+	points[3] = 3;
+	m_pPolyArray[0].vertices = points;
+	points = new unsigned int[4];
+	points[0] = 7;
+	points[1] = 6;
+	points[2] = 5;
+	points[3] = 4;
+	m_pPolyArray[1].vertices = points;
+	points = new unsigned int[4];
+	points[0] = 1;
+	points[1] = 5;
+	points[2] = 6;
+	points[3] = 2;
+	m_pPolyArray[2].vertices = points;
+	points = new unsigned int[4];
+	points[0] = 4;
+	points[1] = 0;
+	points[2] = 3;
+	points[3] = 7;
+	m_pPolyArray[3].vertices = points;
+	points = new unsigned int[4];
+	points[0] = 4;
+	points[1] = 5;
+	points[2] = 1;
+	points[3] = 0;
+	m_pPolyArray[4].vertices = points;
+	points = new unsigned int[4];
+	points[0] = 3;
+	points[1] = 2;
+	points[2] = 6;
+	points[3] = 7;
+	m_pPolyArray[5].vertices = points;
 
 	for (int i = 0; i < m_nNumPolygon; i++) {
-		m_pQuadArray[i].n = QuadNormal(m_pQuadArray[i]);
-		m_pQuadArray[i].selected = false;
+		m_pPolyArray[i].selected = false;
+		m_pPolyArray[i].vertexCount = 4;
+		m_pPolyArray[i].n.x = 0;
+		m_pPolyArray[i].n.y = 0;
+		m_pPolyArray[i].n.z = 1;
 	}
 
 	m_nNumEdge = 12;
@@ -146,8 +160,8 @@ Model::~Model(void) {
 		delete[] m_pVertexArray;
 	if (m_pEdgeArray != NULL)
 		delete[] m_pEdgeArray;
-	if (m_pQuadArray != NULL)
-		delete[] m_pQuadArray;
+	if (m_pPolyArray != NULL)
+		delete[] m_pPolyArray;
 }
 
 PAE3D_Normal Model::TriangleNormal(PAE3D_Triangle t) {
@@ -228,7 +242,7 @@ void Model::AddVertex(PAE3D_Point point) {
 	m_pVertexArray = temp;
 }
 
-void Model::AddQuad(PAE3D_Quad quad) {
+/*void Model::AddQuad(PAE3D_Quad quad) {
 	m_nNumPolygon++;
 	PAE3D_Quad* temp = new PAE3D_Quad[m_nNumPolygon];
 	for (int i = 0; i < m_nNumPolygon-1; i++) {
@@ -237,7 +251,7 @@ void Model::AddQuad(PAE3D_Quad quad) {
 	temp[m_nNumPolygon-1] = quad;
 	delete(m_pQuadArray);
 	m_pQuadArray = temp;
-}
+}*/
 
 void Model::Smooth() {
 	/*for (int i = 0; i < m_nNumPolygon; i++) {
@@ -328,7 +342,7 @@ void Model::MoveSelected(float dx, float dy, float dz) {
 unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
 	for (int i = 0; i < m_nNumEdge; i++) {
 		if ((m_pEdgeArray[i].v1 == v1 && m_pEdgeArray[i].v2 == v2)
-				|| (m_pEdgeArray[i].v2 == v1 && m_pEdgeArray[i].v2 == v1)) {
+				|| (m_pEdgeArray[i].v2 == v1 && m_pEdgeArray[i].v1 == v2)) {
 			return i;
 		}
 	}
@@ -410,8 +424,8 @@ void Model::RenderEdges(float zoom) {
 }
 
 void Model::RenderFaces() {
-	glBegin(GL_QUADS);
 	for (int i = 0; i < m_nNumPolygon; i++) {
+		PAE3D_Polygon poly = m_pPolyArray[i];
 		if(picking){
 			int id = i + PAE3D_COLORPADDING;
 			int r = (id & 0x000000FF) >> 0;
@@ -419,25 +433,20 @@ void Model::RenderFaces() {
 			int b = (id & 0x00FF0000) >> 16;
 			glColor3f(r/255.0, g/255.0, b/255.0);
 		}
-		else if (m_hasSelected && m_pQuadArray[i].selected) {
+		else if (m_hasSelected && poly.selected) {
 			glColor3f(0.5, 0.3, 0.5);
 		}
 		else {
 			glColor3f(0.77, 0.77, 0.5);
 		}
-		PAE3D_Quad quad = m_pQuadArray[i];
-		PAE3D_Point p = m_pVertexArray[quad.v1];
-		PAE3D_Normal n = quad.n;
-		glNormal3f(n.x, n.y, n.z);
-		glVertex3f(p.x, p.y, p.z);
-		p = m_pVertexArray[quad.v2];
-		glVertex3f(p.x, p.y, p.z);
-		p = m_pVertexArray[quad.v3];
-		glVertex3f(p.x, p.y, p.z);
-		p = m_pVertexArray[quad.v4];
-		glVertex3f(p.x, p.y, p.z);
+		glNormal3f(poly.n.x, poly.n.y, poly.n.z);
+		glBegin(GL_POLYGON);
+		for(int j = 0 ; j < poly.vertexCount; j++) {
+			PAE3D_Point p = m_pVertexArray[poly.vertices[j]];
+			glVertex3f(p.x, p.y, p.z);
+		}
+		glEnd();
 	}
-	glEnd();
 }
 
 void Model::RenderPicker(float zoom) {
@@ -472,6 +481,19 @@ void Model::RenderPicker(float zoom) {
 	picking = false;
 }
 
+void Model::DeselectEverything() {
+	m_hasSelected = false;
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].selected = false;
+	}
+	for (int i = 0; i < m_nNumEdge; i++) {
+		m_pEdgeArray[i].selected = false;
+	}
+	for (int i = 0; i < m_nNumPoint; i++) {
+		m_pVertexArray[i].selected = false;
+	}
+}
+
 void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHandles){
 	SelectedHandle = PAE3D_SELECT_NO_HANDLE;
 	GLint viewport[4];
@@ -482,46 +504,40 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 	switch (m_SelectMode) {
 	case PAE3D_SELECT_FACES:
 		if (id < m_nNumPolygon && !onlyHandles) {
-			if (m_pQuadArray[id].selected) {
+			if (m_pPolyArray[id].selected) {
 				if (shift) {
 					/*deselects face from group*/
-					m_pQuadArray[id].selected = false;
-					CascadeFaceSelection(id);
+					m_pPolyArray[id].selected = false;
 					m_hasSelected = false;
 					for (int i = 0; i < m_nNumPolygon; i++) {
-						if (m_pQuadArray[i].selected) {
+						if (m_pPolyArray[i].selected) {
 							m_hasSelected = true;
 							break;
 						}
 					}
+					CascadeFaceSelection(id);
 				}
 				else {
 					/*single select, deselecting any group*/
-					for (int i = 0; i < m_nNumPolygon; i++) {
-						m_pQuadArray[i].selected = false;
-						CascadeFaceSelection(i);
-					}
-					m_pQuadArray[id].selected = true;
-					CascadeFaceSelection(id);
+					DeselectEverything();
+					m_pPolyArray[id].selected = true;
 					m_hasSelected = true;
+					CascadeFaceSelection(id);
 				}
 			}
 			else {
 				if (shift) {
 					/*adds to selection group*/
-					m_pQuadArray[id].selected = true;
-					CascadeFaceSelection(id);
+					m_pPolyArray[id].selected = true;
 					m_hasSelected = true;
+					CascadeFaceSelection(id);
 				}
 				else {
 					/*single select, deselecting any group*/
-					for (int i = 0; i < m_nNumPolygon; i++) {
-						m_pQuadArray[i].selected = false;
-						CascadeFaceSelection(i);
-					}
-					m_pQuadArray[id].selected = true;
-					CascadeFaceSelection(id);
+					DeselectEverything();
+					m_pPolyArray[id].selected = true;
 					m_hasSelected = true;
+					CascadeFaceSelection(id);
 				}
 			}
 		}
@@ -617,7 +633,6 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 		}
 	}
 	if(m_hasSelected){
-		CheckSelection();
 		int count = 0;
 		m_selectedCenter.x = 0;
 		m_selectedCenter.y = 0;
@@ -659,19 +674,36 @@ void Model::SetSelectType(int type){
 }
 
 void Model::CascadeFaceSelection(int face){
-	PAE3D_Quad q = m_pQuadArray[face];
-	if (q.selected) {
-		m_pVertexArray[q.v1].selected = true;
-		m_pVertexArray[q.v2].selected = true;
-		m_pVertexArray[q.v3].selected = true;
-		m_pVertexArray[q.v4].selected = true;
-	}else{
-		m_pVertexArray[q.v1].selected = false;
-		m_pVertexArray[q.v2].selected = false;
-		m_pVertexArray[q.v3].selected = false;
-		m_pVertexArray[q.v4].selected = false;
+	PAE3D_Polygon poly = m_pPolyArray[face];
+	if (poly.selected) {
+		for (int i = 0; i < poly.vertexCount; i++) {
+			m_pVertexArray[poly.vertices[i]].selected = true;
+		}
+		for (int i = 1; i < poly.vertexCount; i++) {
+			int edge = FindEdge(poly.vertices[i - 1], poly.vertices[i]);
+			if (edge >= 0) {
+				m_pEdgeArray[edge].selected = true;
+			}
+		}
+		int edge = FindEdge(poly.vertices[0],
+				poly.vertices[poly.vertexCount - 1]);
+		if (edge > 0) {
+			m_pEdgeArray[edge].selected = true;
+		}
 	}
-
+	else {
+		for (int i = 0; i < m_nNumEdge; i++) {
+			m_pEdgeArray[i].selected = false;
+		}
+		for (int i = 0; i < m_nNumPoint; i++) {
+			m_pVertexArray[i].selected = false;
+		}
+		for (int i = 0 ; i < m_nNumPolygon; i++) {
+			if (m_pPolyArray[i].selected) {
+				CascadeFaceSelection(i);
+			}
+		}
+	}
 }
 void Model::CascadeEdgeSelection(int edge){
 	PAE3D_Edge e = m_pEdgeArray[edge];
@@ -683,26 +715,6 @@ void Model::CascadeEdgeSelection(int edge){
 		m_pVertexArray[e.v2].selected = false;
 	}
 
-}
-
-void Model::CheckSelection(){
-	for (int i = 0; i < m_nNumEdge; i++) {
-		PAE3D_Edge e = m_pEdgeArray[i];
-		if(m_pVertexArray[e.v1].selected && m_pVertexArray[e.v2].selected){
-			m_pEdgeArray[i].selected = true;
-		}else{
-			m_pEdgeArray[i].selected = false;
-		}
-	}
-	for (int k = 0; k < m_nNumPolygon; k++) {
-		PAE3D_Quad q = m_pQuadArray[k];
-		if(m_pVertexArray[q.v1].selected && m_pVertexArray[q.v2].selected &&
-				m_pVertexArray[q.v3].selected && m_pVertexArray[q.v4].selected){
-			m_pQuadArray[k].selected = true;
-		} else {
-			m_pQuadArray[k].selected = false;
-		}
-	}
 }
 
 

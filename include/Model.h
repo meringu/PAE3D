@@ -16,7 +16,7 @@ class Model
 {
 private:
 	PAE3D_Point* m_pVertexArray;
-	PAE3D_Quad* m_pQuadArray;
+	PAE3D_Polygon* m_pPolyArray;
 	PAE3D_Edge* m_pEdgeArray;
 	int m_nNumPoint;
 	int m_nNumEdge;
@@ -33,6 +33,7 @@ public:
 	PAE3D_Normal QuadNormal(PAE3D_Quad);
 	PAE3D_Point QuadCenter(PAE3D_Quad);
 	void MoveSelected(float, float, float);
+	void DeselectEverything();
 	void RenderVertices(float);
 	void RenderEdges(float);
 	void RenderFaces();
@@ -48,5 +49,4 @@ public:
 	void SetSelectType(int);
 	void CascadeFaceSelection(int);
 	void CascadeEdgeSelection(int);
-	void CheckSelection();
 };

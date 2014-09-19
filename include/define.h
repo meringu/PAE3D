@@ -92,6 +92,14 @@ struct PAE3D_Quad {
 	unsigned int t4;*/
 };
 
+struct PAE3D_Polygon {
+	bool selected;
+	PAE3D_Normal n;
+	int vertexCount;
+	unsigned int* vertices;
+};
+
+
 
 /*struct lightParameters
 {
