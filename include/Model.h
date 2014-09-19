@@ -48,4 +48,8 @@ public:
 	void SetSelectType(int);
 	void CascadeFaceSelection(int);
 	void CascadeEdgeSelection(int);
+
+	//debug
+	void PAE3D_PrintPoly (PAE3D_Polygon p);
+	void PAE3D_PrintEdge(PAE3D_Edge e);
 };

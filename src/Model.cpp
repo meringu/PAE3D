@@ -148,9 +148,30 @@ Model::Model() {
 
 	for (int i = 0; i < m_nNumEdge; i++) {
 		m_pEdgeArray[i].selected = false;
+		m_pEdgeArray[i].hasPoly1= false;
+		m_pEdgeArray[i].hasPoly2= false;
 	}
 	for (int i = 0; i < m_nNumPoint; i++) {
 		m_pVertexArray[i].selected = false;
+	}
+
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].edges = new unsigned int[m_pPolyArray[i].vertexCount];
+		for (int j = 0; j < m_pPolyArray[i].vertexCount; j++) {
+			int v1 = m_pPolyArray[i].vertices[j];
+			int v2 = m_pPolyArray[i].vertices[(j+1)%m_pPolyArray[i].vertexCount];
+			int edge = FindEdge(v1, v2);
+			m_pPolyArray[i].edges[j] = edge;
+			if (m_pEdgeArray[edge].hasPoly1) {
+				m_pEdgeArray[edge].poly2 = i;
+				m_pEdgeArray[edge].hasPoly2 = true;
+			}
+			else {
+				m_pEdgeArray[edge].poly1 = i;
+				m_pEdgeArray[edge].hasPoly1 = true;
+
+			}
+		}
 	}
 }
 
@@ -207,9 +228,9 @@ PAE3D_Point Model::PolyCenter(int p) {
 	center.y = 0;
 	center.z = 0;
 	for (int i = 0; i < poly.vertexCount; i++) {
-		center.x = m_pVertexArray[poly.vertices[i]].x;
-		center.y = m_pVertexArray[poly.vertices[i]].y;
-		center.z = m_pVertexArray[poly.vertices[i]].z;
+		center.x += m_pVertexArray[poly.vertices[i]].x;
+		center.y += m_pVertexArray[poly.vertices[i]].y;
+		center.z += m_pVertexArray[poly.vertices[i]].z;
 	}
 	center.x /= poly.vertexCount;
 	center.y /= poly.vertexCount;
@@ -251,62 +272,181 @@ void Model::AddPoly(PAE3D_Polygon quad) {
 }
 
 void Model::Smooth() {
-	/*for (int i = 0; i < m_nNumPolygon; i++) {
-		PAE3D_Quad q = m_pQuadArray[i];
-		PAE3D_Point v1 = m_pVertexArray[q.v1];
-		PAE3D_Point v2 = m_pVertexArray[q.v2];
-		PAE3D_Point v3 = m_pVertexArray[q.v3];
-		PAE3D_Point v4 = m_pVertexArray[q.v4];
-		PAE3D_Point p;
-		p.x = (v1.x + v2.x + v3.x + v4.x) / 4;
-		p.y = (v1.y + v2.y + v3.y + v4.y) / 4;
-		p.z = (v1.z + v2.z + v3.z + v4.z) / 4;
-		q.c = m_nNumPoint;
-		AddVertex(p);
+	// Catmull-Clark
+	unsigned int points = m_nNumPoint;
+	unsigned int edges = m_nNumEdge;
+	unsigned int polys = m_nNumPolygon;
+	printf("finding face points...");
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].c = m_nNumPoint;
+		AddVertex(PolyCenter(i));
 	}
+	// finding edge points
 	for (int i = 0; i < m_nNumEdge; i++) {
-		PAE3D_Edge e = m_pEdgeArray[i];
-		PAE3D_Point v1 = m_pVertexArray[e.v1];
-		PAE3D_Point v2 = m_pVertexArray[e.v2];
+		PAE3D_Point v1 = m_pVertexArray[m_pEdgeArray[i].v1];
+		PAE3D_Point v2 = m_pVertexArray[m_pEdgeArray[i].v2];
 		PAE3D_Point p;
-		p.x = (v1.x + v2.x) / 2;
-		p.y = (v1.y + v2.y) / 2;
-		p.z = (v1.z + v2.z) / 2;
-		e.c = m_nNumPoint;
+		p.x = v1.x + v2.x;
+		p.y = v1.y + v2.y;
+		p.z = v1.z + v2.z;
+		int count = 2;
+		if (m_pEdgeArray[i].hasPoly1) {
+			PAE3D_Point v3 = m_pVertexArray[m_pPolyArray[m_pEdgeArray[i].poly1].c];
+			p.x += v3.x;
+			p.y += v3.y;
+			p.z += v3.z;
+			count++;
+		}
+		if (m_pEdgeArray[i].hasPoly2) {
+			PAE3D_Point v3 = m_pVertexArray[m_pPolyArray[m_pEdgeArray[i].poly2].c];
+			p.x += v3.x;
+			p.y += v3.y;
+			p.z += v3.z;
+			count++;
+		}
+		p.x /= count;
+		p.y /= count;
+		p.z /= count;
+		m_pEdgeArray[i].c = m_nNumPoint;
 		AddVertex(p);
 	}
-	//for (int i = 0; i < m_nNumPolygon; i++) {
-		PAE3D_Quad q = m_pQuadArray[0];
-		int ei1 = FindEdge(q.v1, q.v2);
-		int ei2 = FindEdge(q.v2, q.v3);
-		int ei3 = FindEdge(q.v3, q.v4);
-		int ei4 = FindEdge(q.v4, q.v1);
-		printf("%d, %d, %d, %d\n", ei1, ei2, ei3, ei4);
+	// joining face points to edge points
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		for (int j = 0; j < m_pPolyArray[i].vertexCount; j++) {
+			PAE3D_Edge e;
+			e.v1 = m_pPolyArray[i].c;
+			e.v2 = m_pEdgeArray[m_pPolyArray[i].edges[j]].c;
+			e.hasPoly1 = false;
+			e.hasPoly2 = false;
+			AddEdge(e);
+		}
+	}
+	//adjusting original point positions
+	for (unsigned int i = 0; i < points; i++) {
+		PAE3D_Point f;
+		f.x = 0;
+		f.y = 0;
+		f.z = 0;
+		int neighboringPolys = 0;
+		for (int j = 0; j < m_nNumPolygon; j++) {
+			bool touches = false;
+			for (int k = 0; k < m_pPolyArray[j].vertexCount; k++) {
+				if (m_pPolyArray[j].vertices[k] == i) {
+					touches = true;
+				}
+			}
+			if (touches) {
+				f.x += m_pVertexArray[m_pPolyArray[j].c].x;
+				f.y += m_pVertexArray[m_pPolyArray[j].c].y;
+				f.z += m_pVertexArray[m_pPolyArray[j].c].z;
+				neighboringPolys++;
+			}
+		}
+		if (neighboringPolys == 0) {
+			continue;
+		}
+		f.x /= neighboringPolys;
+		f.y /= neighboringPolys;
+		f.z /= neighboringPolys;
+		PAE3D_Point r;
+		r.x = 0;
+		r.y = 0;
+		r.z = 0;
+		int neighboringEdges = 0;
+		for (int j = 0; j < m_nNumEdge; j++) {
+			if (m_pEdgeArray[j].v1 == i || m_pEdgeArray[j].v2 == i) {
+				r.x += m_pVertexArray[m_pEdgeArray[j].c].x;
+				r.y += m_pVertexArray[m_pEdgeArray[j].c].y;
+				r.z += m_pVertexArray[m_pEdgeArray[j].c].z;
+				neighboringEdges++;
+			}
+		}
+		if (neighboringEdges == 0) {
+			continue;
+		}
+		r.x /= neighboringEdges;
+		r.y /= neighboringEdges;
+		r.z /= neighboringEdges;
+		int n = neighboringPolys;
+		float w1 = (n-2.0);
+		float w2 = 1.0;
+		float w3 = 1.0;
+		m_pVertexArray[i].x = (w3*f.x + w2*r.x + w1*m_pVertexArray[i].x)/n;
+		m_pVertexArray[i].y = (w3*f.y + w2*r.y + w1*m_pVertexArray[i].y)/n;
+		m_pVertexArray[i].z = (w3*f.z + w2*r.z + w1*m_pVertexArray[i].z)/n;
+	}
+	// splitting original edges in half
+	for (unsigned int i = 0; i < edges; i++) {
+		PAE3D_Edge e;
+		e.v1 = m_pEdgeArray[i].c;
+		e.v2 = m_pEdgeArray[i].v2;
+		e.hasPoly1 = false;
+		e.hasPoly2 = false;
+		AddEdge(e);
+		m_pEdgeArray[i].v2 = m_pEdgeArray[i].c;
+		m_pEdgeArray[i].hasPoly1 = false;
+		m_pEdgeArray[i].hasPoly2 = false;
+	}
+	// creating new faces
+	for (unsigned int i = 0; i < polys; i++) {
+		unsigned int* oldVertices = m_pPolyArray[i].vertices;
+		unsigned int* oldEdges = m_pPolyArray[i].edges;
+		int oldVertexCount = m_pPolyArray[i].vertexCount;
+		m_pPolyArray[i].vertexCount = 4;
+		m_pPolyArray[i].vertices = new unsigned int[4];
+		m_pPolyArray[i].vertices[0] = oldVertices[0];
+		m_pPolyArray[i].vertices[1] = m_pEdgeArray[oldEdges[0]].c;
+		m_pPolyArray[i].vertices[2] = m_pPolyArray[i].c;
+		m_pPolyArray[i].vertices[3] = m_pEdgeArray[oldEdges[oldVertexCount-1]].c;
+		m_pPolyArray[i].edges = new unsigned int[4];
+		for (int j = 1; j < oldVertexCount; j++) {
+			PAE3D_Polygon poly2;
+			poly2.vertexCount = 4;
+			poly2.vertices = new unsigned int[4];
+			poly2.vertices[0] = oldVertices[j];
+			poly2.vertices[1] = m_pEdgeArray[oldEdges[j]].c;
+			poly2.vertices[2] = m_pPolyArray[i].c;
+			poly2.vertices[3] = m_pEdgeArray[oldEdges[j-1]].c;
+			poly2.selected = m_pPolyArray[i].selected;
+			poly2.edges = new unsigned int[4];
+			poly2.c = 0;
+			AddPoly(poly2);
+			m_pPolyArray[m_nNumPolygon-1].n = PolyNormal(m_nNumPolygon-1);
+		}
+		delete(oldVertices);
+		delete(oldEdges);
+	}
+	// assigning edges to all faces
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		for (int j = 0; j < 4; j++) {
+			m_pPolyArray[i].edges[j] = FindEdge(m_pPolyArray[i].vertices[j], m_pPolyArray[i].vertices[(j+1)%(m_pPolyArray[i].vertexCount)]);
+			m_pEdgeArray[m_pPolyArray[i].edges[j]].selected = true;
+			if (m_pEdgeArray[m_pPolyArray[i].edges[j]].hasPoly1) {
+				m_pEdgeArray[m_pPolyArray[i].edges[j]].poly2 = i;
+				m_pEdgeArray[m_pPolyArray[i].edges[j]].hasPoly2 = true;
+			} else {
+				m_pEdgeArray[m_pPolyArray[i].edges[j]].poly1 = i;
+				m_pEdgeArray[m_pPolyArray[i].edges[j]].hasPoly1 = true;
+			}
+		}
+	}
+	DeselectEverything();
+}
 
-		PAE3D_Edge e1;
-		e1.v1 = q.c;
-		e1.v2 = 0;//m_pEdgeArray[ei1].c;
-		e1.c = 0;
-		PAE3D_Edge e2;
-		e2.v1 = q.c;
-		e2.v2 = 0;//m_pEdgeArray[ei2].c;
-		e2.c = 0;
-		PAE3D_Edge e3;
-		e3.v1 = q.c;
-		e3.v2 = 0;//m_pEdgeArray[ei3].c;
-		e3.c = 0;
-		PAE3D_Edge e4;
-		e4.v1 = q.c;
-		e4.v2 = 0;//m_pEdgeArray[ei4].c;
-		e4.c = 0;
-		AddEdge(e1);
-		AddEdge(e2);
-		AddEdge(e3);
-		AddEdge(e4);
-		m_pQuadArray[i].v3 = m_pQuadArray[i].c;
-		m_pQuadArray[i].v2 = m_pEdgeArray[FindEdge(m_pQuadArray[i].v1, m_pQuadArray[i].v2)].c;
-		m_pQuadArray[i].v4 = m_pEdgeArray[FindEdge(m_pQuadArray[i].v4, m_pQuadArray[i].v1)].c;
-	//}*/
+void Model::PAE3D_PrintPoly(PAE3D_Polygon p) {
+	printf("selected: %s, n : (%f, %f, %f), vertexCount: %d, c: %d, verts: ", p.selected ? "true" : "false", p.n.x, p.n.y, p.n.z, p.vertexCount, p.c);
+	for (int i = 0; i < p.vertexCount; i++) {
+		printf(" %d", p.vertices[i]);
+	}
+	printf(", edges:");
+	for (int i = 0; i < p.vertexCount; i++) {
+		printf(" %d", p.edges[i]);
+	}
+	printf("\n");
+}
+
+void Model::PAE3D_PrintEdge(PAE3D_Edge e) {
+	printf("v1: %d, v2: %d, c: %d, hasPoly1: %s, hasPoly2: %s poly1: %d, poly2: %d selected: %s\n", e.v1, e.v2, e.c, e.hasPoly1 ? "true" : "false", e.hasPoly2 ? "true" : "false", e.poly1, e.poly2, e.selected ? "true" : "false");
 }
 
 void Model::MoveSelected(float dx, float dy, float dz) {
@@ -349,12 +489,14 @@ unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
 void Model::RenderVertices(float zoom) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	for (int i = 0; i < m_nNumPoint; i++) {
+		float radius = 1;
 		if(picking){
 			int id = i + PAE3D_COLORPADDING;
 			int r = (id & 0x000000FF) >> 0;
 			int g = (id & 0x0000FF00) >> 8;
 			int b = (id & 0x00FF0000) >> 16;
 			glColor3f(r/255.0, g/255.0, b/255.0);
+			radius = 3;
 		}
 		else if (m_hasSelected && m_pVertexArray[i].selected) {
 			glColor3f(1.0, 0.0, 0.0);
@@ -365,7 +507,7 @@ void Model::RenderVertices(float zoom) {
 		glPushMatrix();
 		PAE3D_Point p = m_pVertexArray[i];
 		glTranslatef(p.x, p.y, p.z);
-		glutSolidSphere(1.0/height * zoom, 20, 20);
+		glutSolidSphere(radius/height * zoom, 20, 20);
 		glPopMatrix();
 	}
 }
@@ -675,16 +817,8 @@ void Model::CascadeFaceSelection(int face){
 		for (int i = 0; i < poly.vertexCount; i++) {
 			m_pVertexArray[poly.vertices[i]].selected = true;
 		}
-		for (int i = 1; i < poly.vertexCount; i++) {
-			int edge = FindEdge(poly.vertices[i - 1], poly.vertices[i]);
-			if (edge >= 0) {
-				m_pEdgeArray[edge].selected = true;
-			}
-		}
-		int edge = FindEdge(poly.vertices[0],
-				poly.vertices[poly.vertexCount - 1]);
-		if (edge > 0) {
-			m_pEdgeArray[edge].selected = true;
+		for (int i = 0; i < poly.vertexCount; i++) {
+			m_pEdgeArray[poly.edges[i]].selected = true;
 		}
 	}
 	else {
