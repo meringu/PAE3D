@@ -693,37 +693,35 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 			if (m_pEdgeArray[id].selected) {
 				if (shift) {
 					m_pEdgeArray[id].selected = false;
-					CascadeEdgeSelection(id);
 					m_hasSelected = false;
 					for (int i = 0; i < m_nNumEdge; i++) {
 						if (m_pEdgeArray[i].selected) {
 							m_hasSelected = true;
-							CascadeEdgeSelection(i);
 						break;
 						}
 					}
-				} else {
+					CascadeEdgeSelection(id);
+				}
+				else {
 					for (int i = 0; i < m_nNumEdge; i++) {
 						m_pEdgeArray[i].selected = false;
-						CascadeEdgeSelection(i);
 					}
 					m_pEdgeArray[id].selected = true;
-					CascadeEdgeSelection(id);
 					m_hasSelected = false;
+					CascadeEdgeSelection(id);
 				}
 			} else {
 				if (shift) {
 					m_pEdgeArray[id].selected = true;
-					CascadeEdgeSelection(id);
 					m_hasSelected = true;
+					CascadeEdgeSelection(id);
 				} else {
 					for (int i = 0; i < m_nNumEdge; i++) {
 						m_pEdgeArray[i].selected = false;
-						CascadeEdgeSelection(i);
 					}
 					m_pEdgeArray[id].selected = true;
-					CascadeEdgeSelection(id);
 					m_hasSelected = true;
+					CascadeEdgeSelection(id);
 				}
 			}
 		}
@@ -736,6 +734,7 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 					/*deselects face from group*/
 					m_pVertexArray[id].selected = false;
 					m_hasSelected = false;
+					CascadeVertexSelection();
 					for (int i = 0; i < m_nNumPoint; i++) {
 						if (m_pVertexArray[i].selected) {
 							m_hasSelected = true;
@@ -750,12 +749,14 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 					}
 					m_pVertexArray[id].selected = true;
 					m_hasSelected = false;
+					CascadeVertexSelection();
 				}
 			} else {
 				if (shift) {
 					/*adds to selection group*/
 					m_pVertexArray[id].selected = true;
 					m_hasSelected = true;
+					CascadeVertexSelection();
 				} else {
 					/*single select, deselecting any group*/
 					for (int i = 0; i < m_nNumPoint; i++) {
@@ -763,6 +764,7 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 					}
 					m_pVertexArray[id].selected = true;
 					m_hasSelected = true;
+					CascadeVertexSelection();
 				}
 			}
 		}
