@@ -51,6 +51,7 @@ public:
 	void CascadeEdgeSelection(int);
 	void CascadeVertexSelection();
 	void Extrude();
+	void Duplicate();
 
 	//debug
 	void PAE3D_PrintPoly (PAE3D_Polygon p);

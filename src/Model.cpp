@@ -707,7 +707,7 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 						m_pEdgeArray[i].selected = false;
 					}
 					m_pEdgeArray[id].selected = true;
-					m_hasSelected = false;
+					m_hasSelected = true;
 					CascadeEdgeSelection(id);
 				}
 			} else {
@@ -718,6 +718,9 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool onlyHand
 				} else {
 					for (int i = 0; i < m_nNumEdge; i++) {
 						m_pEdgeArray[i].selected = false;
+					}
+					for (int i = 0; i < m_nNumPoint; i++) {
+						m_pVertexArray[i].selected = false;
 					}
 					m_pEdgeArray[id].selected = true;
 					m_hasSelected = true;
@@ -878,6 +881,8 @@ void Model::CascadeEdgeSelection(int edge){
 			}
 			m_pPolyArray[i].selected = hasVerts;
 		}
+
+
 	} else {
 		m_pVertexArray[currentEdge.v1].selected = false;
 		m_pVertexArray[currentEdge.v2].selected = false;
@@ -910,34 +915,36 @@ void Model::CascadeVertexSelection(){
 		}
 	}
 }
+
 void Model::Extrude(){
-	printf("Extrude \n");
 	int vertCount = 0;
 	int edgeCount = 0;
+	int faceCount =0;
 	for (int i = 0; i < m_nNumPoint; i++) {
 		if (m_pVertexArray[i].selected == true) {vertCount++;}
 	}
-	/*for (int i = 0; i < m_nNumEdge; i++) {
+	for (int i = 0; i < m_nNumEdge; i++) {
 		if (m_pEdgeArray[i].selected) {edgeCount++;}
-	}*/
-	int* tempVertsInd = new int[vertCount];
-	//int* tempEdgeInd = new int[edgeCount];
+	}
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		if (m_pPolyArray[i].selected) {faceCount++;}
+	}
+	unsigned int* tempVertsInd = new unsigned int[vertCount];
+	unsigned int* tempEdgeInd = new unsigned int[edgeCount];
 	PAE3D_Point* tempVerts = new PAE3D_Point[vertCount];
-	PAE3D_Edge* tempEdges = new PAE3D_Edge[vertCount];
+	PAE3D_Edge* tempEdges = new PAE3D_Edge[edgeCount];
+	PAE3D_Polygon* tempFaces = new PAE3D_Polygon[faceCount];
 
 	int pos = 0;
-	for (int k = 0; k < m_nNumPoint; k++) {
-		printf("Extrude if %i \n",k );
-		if (m_pVertexArray[k].selected == true) {
-
-			tempVertsInd[pos]= k;
-
+	for (int i = 0; i < m_nNumPoint; i++) {
+		if (m_pVertexArray[i].selected == true) {
 			PAE3D_Point temp;
-			temp.x = m_pVertexArray[k].x;
-			temp.y = m_pVertexArray[k].y;
-			temp.z = m_pVertexArray[k].z+1;
-			m_pVertexArray[k].selected = false;
+			temp.x = m_pVertexArray[i].x;
+			temp.y = m_pVertexArray[i].y;
+			temp.z = m_pVertexArray[i].z;
+			m_pVertexArray[i].selected = false;
 			temp.selected = true;
+			tempVertsInd[pos]= i;
 			tempVerts[pos] = temp;
 			pos++;
 		}
@@ -946,12 +953,18 @@ void Model::Extrude(){
 	for(int i = 0; i < vertCount; i++){
 		AddVertex(tempVerts[i]);
 	}
+	for(int i = 0; i < vertCount; i++){
+		PAE3D_Edge temp;
+		temp.selected = false;
+		temp.v1 = tempVertsInd[i];
+		temp.v2 = (m_nNumPoint - vertCount) + i;
+		AddEdge(temp);
+	}
+
 	pos = 0;
 	for(int i = 0; i< m_nNumEdge;i++){
 		if (m_pEdgeArray[i].selected) {
-
 			PAE3D_Edge temp;
-			int tempind=0;
 			for(int k = 0; k< vertCount; k++){
 				if(tempVertsInd[k]== m_pEdgeArray[i].v1){
 					temp.v1 = (m_nNumPoint - vertCount) + k;
@@ -962,7 +975,107 @@ void Model::Extrude(){
 			}
 			m_pEdgeArray[i].selected = false;
 			temp.selected = true;
-			//AddEdge(temp);
+			tempEdgeInd[pos]= i;
+			tempEdges[pos] = temp;
+			pos++;
+		}
+	}
+	for(int i = 0; i < edgeCount; i++){
+		AddEdge(tempEdges[i]);
+	}
+	for(int i = 0; i < edgeCount; i++){
+		PAE3D_Polygon temp;
+		temp.vertices = new unsigned int[4];
+		temp.vertexCount = 4;
+		temp.vertices[3]= m_pEdgeArray[tempEdgeInd[i]].v1;
+		temp.vertices[2]= m_pEdgeArray[tempEdgeInd[i]].v2;
+		temp.vertices[0]= m_pEdgeArray[(m_nNumEdge - edgeCount) + i].v1;
+		temp.vertices[1]= m_pEdgeArray[(m_nNumEdge - edgeCount) + i].v2;
+		temp.selected = false;
+		AddPoly(temp);
+		PolyNormal(m_nNumPolygon-1);
+	}
+
+	pos = 0;
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		if (m_pPolyArray[i].selected) {
+			PAE3D_Polygon temp;
+			temp.vertices = new unsigned int[m_pPolyArray[i].vertexCount];
+			temp.vertexCount = m_pPolyArray[i].vertexCount;
+			for(int k =0; k < m_pPolyArray[i].vertexCount; k++){
+					for(int j= 0; j< vertCount;j++){
+						if(tempVertsInd[j]==m_pPolyArray[i].vertices[k]){
+							temp.vertices[k] = (m_nNumPoint - vertCount)+j;
+							break;
+						}
+					}
+			}
+			m_pPolyArray[i].selected = false;
+			temp.selected = true;
+			tempFaces[pos] = temp;
+			pos++;
+		}
+
+	}
+	for(int i = 0; i < faceCount; i++){
+		AddPoly(tempFaces[i]);
+		PolyNormal(m_nNumPolygon-1);
+	}
+}
+
+void Model::Duplicate(){
+	int vertCount = 0;
+	int edgeCount = 0;
+	int faceCount =0;
+	for (int i = 0; i < m_nNumPoint; i++) {
+		if (m_pVertexArray[i].selected == true) {vertCount++;}
+	}
+	for (int i = 0; i < m_nNumEdge; i++) {
+		if (m_pEdgeArray[i].selected) {edgeCount++;}
+	}
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		if (m_pPolyArray[i].selected) {faceCount++;}
+	}
+	unsigned int* tempVertsInd = new unsigned int[vertCount];
+	unsigned int* tempEdgeInd = new unsigned int[edgeCount];
+	PAE3D_Point* tempVerts = new PAE3D_Point[vertCount];
+	PAE3D_Edge* tempEdges = new PAE3D_Edge[edgeCount];
+	PAE3D_Polygon* tempFaces = new PAE3D_Polygon[faceCount];
+
+	int pos = 0;
+	for (int i = 0; i < m_nNumPoint; i++) {
+		if (m_pVertexArray[i].selected == true) {
+			PAE3D_Point temp;
+			temp.x = m_pVertexArray[i].x;
+			temp.y = m_pVertexArray[i].y;
+			temp.z = m_pVertexArray[i].z+1;
+			m_pVertexArray[i].selected = false;
+			temp.selected = true;
+			tempVertsInd[pos]= i;
+			tempVerts[pos] = temp;
+			pos++;
+		}
+	}
+
+	for(int i = 0; i < vertCount; i++){
+		AddVertex(tempVerts[i]);
+	}
+
+	pos = 0;
+	for(int i = 0; i< m_nNumEdge;i++){
+		if (m_pEdgeArray[i].selected) {
+			PAE3D_Edge temp;
+			for(int k = 0; k< vertCount; k++){
+				if(tempVertsInd[k]== m_pEdgeArray[i].v1){
+					temp.v1 = (m_nNumPoint - vertCount) + k;
+				}
+				if(tempVertsInd[k]== m_pEdgeArray[i].v2){
+					temp.v2 = (m_nNumPoint - vertCount) + k;
+				}
+			}
+			m_pEdgeArray[i].selected = false;
+			temp.selected = true;
+			tempEdgeInd[pos]= i;
 			tempEdges[pos] = temp;
 			pos++;
 		}
@@ -970,25 +1083,32 @@ void Model::Extrude(){
 	for(int i = 0; i < vertCount; i++){
 		AddEdge(tempEdges[i]);
 	}
-
-	//int position = (m_nNumPoint - vertCount) + pos;
-/*
+	pos = 0;
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
-			unsigned int* tempVerts = new unsigned int[m_pPolyArray[i].vertexCount];
-			PAE3D_Polygon poly;
-			for(int k =0; k< m_pPolyArray[i].vertexCount; k++){
-				AddVertex(m_pVertexArray[m_pPolyArray[i].vertices[k]]);
-				tempVerts[k] = m_nNumPoint -1;
+			PAE3D_Polygon temp;
+			temp.vertices = new unsigned int[m_pPolyArray[i].vertexCount];
+			temp.vertexCount = m_pPolyArray[i].vertexCount;
+			for(int k =0; k < m_pPolyArray[i].vertexCount; k++){
+					for(int j= 0; j< vertCount;j++){
+						if(tempVertsInd[j]==m_pPolyArray[i].vertices[k]){
+							temp.vertices[k] = (m_nNumPoint - vertCount)+j;
+							break;
+						}
+					}
 			}
-
+			m_pPolyArray[i].selected = false;
+			temp.selected = true;
+			tempFaces[pos] = temp;
+			pos++;
 		}
 
-	}*/
-
+	}
+	for(int i = 0; i < faceCount; i++){
+		AddPoly(tempFaces[i]);
+	}
 
 }
-
 
 
 
