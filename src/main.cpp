@@ -137,6 +137,8 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	case 's':
 		handleMode = PAE3D_HANLE_SCALE;
 		break;
+	case 'x':
+		g_model->Extrude();
 	}
 	glutPostRedisplay();
 }
