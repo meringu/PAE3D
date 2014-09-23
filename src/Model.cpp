@@ -496,6 +496,12 @@ void Model::MoveSelected(float dx, float dy, float dz) {
 	m_selectedCenter.x += dx;
 	m_selectedCenter.y += dy;
 	m_selectedCenter.z += dz;
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].n = PolyNormal(i);
+	}
+	for (int i = 0; i < m_nNumPoint; i++) {
+		CalculateNormal(i);
+	}
 }
 
 void Model::ScaleSelected(float dx, float dy, float dz) {
@@ -505,6 +511,12 @@ void Model::ScaleSelected(float dx, float dy, float dz) {
 			m_pVertexArray[i].y += dy * (m_pVertexArray[i].y - m_selectedCenter.y);
 			m_pVertexArray[i].z += dz * (m_pVertexArray[i].z - m_selectedCenter.z);
 		}
+	}
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].n = PolyNormal(i);
+	}
+	for (int i = 0; i < m_nNumPoint; i++) {
+		CalculateNormal(i);
 	}
 }
 
@@ -564,7 +576,7 @@ void Model::RenderVertices(float zoom) {
 			int g = (id & 0x0000FF00) >> 8;
 			int b = (id & 0x00FF0000) >> 16;
 			glColor3f(r/255.0, g/255.0, b/255.0);
-			radius = 3;
+			radius = 4;
 		}
 		else if (m_hasSelected && m_pVertexArray[i].selected) {
 			glColor3f(1.0, 0.0, 0.0);
