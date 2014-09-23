@@ -329,18 +329,18 @@ void Model::Smooth() {
 		f.z = 0;
 		int neighboringPolys = 0;
 		for (int j = 0; j < m_nNumPolygon; j++) {
-			bool touches = false;
-			for (int k = 0; k < m_pPolyArray[j].vertexCount; k++) {
-				if (m_pPolyArray[j].vertices[k] == i) {
-					touches = true;
+				bool touches = false;
+				for (int k = 0; k < m_pPolyArray[j].vertexCount; k++) {
+					if (m_pPolyArray[j].vertices[k] == i) {
+						touches = true;
+					}
 				}
-			}
-			if (touches) {
-				f.x += m_pVertexArray[m_pPolyArray[j].c].x;
-				f.y += m_pVertexArray[m_pPolyArray[j].c].y;
-				f.z += m_pVertexArray[m_pPolyArray[j].c].z;
-				neighboringPolys++;
-			}
+				if (touches) {
+					f.x += m_pVertexArray[m_pPolyArray[j].c].x;
+					f.y += m_pVertexArray[m_pPolyArray[j].c].y;
+					f.z += m_pVertexArray[m_pPolyArray[j].c].z;
+					neighboringPolys++;
+				}
 		}
 		if (neighboringPolys == 0) {
 			continue;
@@ -375,6 +375,7 @@ void Model::Smooth() {
 		m_pVertexArray[i].y = (w3*f.y + w2*r.y + w1*m_pVertexArray[i].y)/n;
 		m_pVertexArray[i].z = (w3*f.z + w2*r.z + w1*m_pVertexArray[i].z)/n;
 	}
+
 	// splitting original edges in half
 	for (unsigned int i = 0; i < edges; i++) {
 		PAE3D_Edge e;
@@ -399,6 +400,7 @@ void Model::Smooth() {
 		m_pPolyArray[i].vertices[2] = m_pPolyArray[i].c;
 		m_pPolyArray[i].vertices[3] = m_pEdgeArray[oldEdges[oldVertexCount-1]].c;
 		m_pPolyArray[i].edges = new unsigned int[4];
+		m_pPolyArray[i].n = PolyNormal(i);
 		for (int j = 1; j < oldVertexCount; j++) {
 			PAE3D_Polygon poly2;
 			poly2.vertexCount = 4;
@@ -581,6 +583,14 @@ void Model::RenderFaces() {
 			glVertex3f(p.x, p.y, p.z);
 		}
 		glEnd();
+		glColor3f(1, 0, 0);
+		// RENDER NORMALS
+		/*glBegin(GL_LINES);
+		PAE3D_Point p = PolyCenter(i);
+		PAE3D_Normal n = poly.n;
+		glVertex3f(p.x, p.y, p.z);
+		glVertex3f(p.x + n.x, p.y + n.y, p.z + n.z);
+		glEnd();*/
 	}
 }
 
