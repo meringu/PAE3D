@@ -1,6 +1,7 @@
 #pragma once
 
 #include "define.h"
+#include "Color.h"
 #include <GL/glut.h>
 #define PAE3D_SELECT_DISABLE 0
 #define PAE3D_SELECT_VERTICES 1
@@ -36,7 +37,7 @@ public:
 	void DeselectEverything();
 	void RenderVertices(float);
 	void RenderEdges(float);
-	void RenderFaces();
+	void RenderFaces(Color*);
 	void RenderSelectedFacesHandle(float, int);
 	void Smooth();
 	void AddVertex(PAE3D_Point);

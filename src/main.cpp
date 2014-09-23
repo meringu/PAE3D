@@ -6,6 +6,7 @@
 #include "define.h"
 #include "Model.h"
 #include <iostream>
+#include "Color.h"
 
 using namespace std;
 
@@ -16,9 +17,11 @@ Model* g_model = NULL;
 #define PAE3D_RENDER 1
 #define PAE3D_SELECT_RIGHT 2
 #define PAE3D_SELECT_LEFT 3
+#define PAE3D_LEFTCLICK_NOTHING 0
+#define PAE3D_LEFTCLICK_COLOR 1
 
 int handleMode = PAE3D_HANLE_MOVE;
-
+int leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 int mode = PAE3D_RENDER;
 bool q_middleClickDown = false;
 bool q_leftClickDown = false;
@@ -27,6 +30,7 @@ float rotation = 45, tilt = 30, zoom = 10;
 bool m_ctrlDownNow = false, m_shiftDownNow = false;
 bool m_ctrlDownLastMiddleClick = false, m_shiftDownLastMiddleClick = false;
 PAE3D_Point g_center;
+Color* g_color;
 
 void PAE3D_Display() ;
 void PAE3D_Reshape(int w, int h);
@@ -38,8 +42,11 @@ void PAE3D_MouseClick(int button, int state, int x, int y);
 void PAE3D_MouseMove(int x, int y);
 void PAE3D_KeyboardDown(unsigned char, int, int);
 void PAE3D_KeyboardUp(unsigned char, int, int);
+void PAE3D_LeftCLickColor();
+void PAE3D_RepostMain();
 
 int main(int argc, char** argv) {
+	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(g_nWinWidth, g_nWinHeight);
@@ -59,6 +66,15 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+void PAE3D_RepostMain() {
+	glutSetWindow(g_mainWnd);
+	glutPostRedisplay();
+}
+
+void PAE3D_LeftCLickColor() {
+	leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+}
+
 void PAE3D_Display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
@@ -73,7 +89,7 @@ void PAE3D_Display() {
 		g_model->RenderVertices(zoom);
 		g_model->RenderEdges(zoom);
 		glEnable(GL_LIGHTING);
-		g_model->RenderFaces();
+		g_model->RenderFaces(g_color);
 		break;
 	case PAE3D_SELECT_RIGHT:
 		glDisable(GL_LIGHTING);
@@ -139,12 +155,16 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'x':
 		g_model->Extrude();
+		break;
+	case 'c':
+		g_color->Open();
+		break;
 	}
 	glutPostRedisplay();
 }
 
 void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
-	(void)x;
+	(void)x;http://openglut.sourceforge.net/group__windowcallback.html
 	(void)y;
 	int sp = glutGetModifiers();
 	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;

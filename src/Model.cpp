@@ -93,6 +93,14 @@ Model::Model() {
 		m_pPolyArray[i].selected = false;
 		m_pPolyArray[i].vertexCount = 4;
 		m_pPolyArray[i].n = PolyNormal(i);
+		m_pPolyArray[i].mat = 0;
+		/*for (int j = 0; j < 4; j++) {
+			if (m_pVertexArray[m_pPolyArray[i].vertices[j]].faceCount == 0) {
+				m_pVertexArray[m_pPolyArray[i].vertices[j]].faces = new unsigned int[3];
+			}
+			m_pVertexArray[m_pPolyArray[i].vertices[j]].faces[m_pVertexArray[m_pPolyArray[i].vertices[j]].faceCount] = i;
+			m_pVertexArray[m_pPolyArray[i].vertices[j]].faceCount++;
+		}*/
 	}
 
 	m_nNumEdge = 12;
@@ -276,7 +284,7 @@ void Model::Smooth() {
 	unsigned int points = m_nNumPoint;
 	unsigned int edges = m_nNumEdge;
 	unsigned int polys = m_nNumPolygon;
-	printf("finding face points...");
+	// finding face points
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pPolyArray[i].c = m_nNumPoint;
 		AddVertex(PolyCenter(i));
@@ -412,6 +420,7 @@ void Model::Smooth() {
 			poly2.selected = m_pPolyArray[i].selected;
 			poly2.edges = new unsigned int[4];
 			poly2.c = 0;
+			poly2.mat = m_pPolyArray[i].mat;
 			AddPoly(poly2);
 			m_pPolyArray[m_nNumPolygon-1].n = PolyNormal(m_nNumPolygon-1);
 		}
@@ -505,7 +514,7 @@ void Model::RenderVertices(float zoom) {
 		glPushMatrix();
 		PAE3D_Point p = m_pVertexArray[i];
 		glTranslatef(p.x, p.y, p.z);
-		glutSolidSphere(radius/height * zoom, 20, 20);
+		glutSolidSphere(radius/height * zoom, 4, 4);
 		glPopMatrix();
 	}
 }
@@ -555,14 +564,15 @@ void Model::RenderEdges(float zoom) {
 		float angle = acos(dot);
 		angle = angle * 180 / M_PI;
 		glRotatef(angle, t.x, t.y, t.z);
-		gluCylinder(quadric, 0.5 / height * zoom, 0.5 / height * zoom, length, 20, 1);
+		gluCylinder(quadric, 0.5 / height * zoom, 0.5 / height * zoom, length, 4, 1);
 		glPopMatrix();
 	}
 }
 
-void Model::RenderFaces() {
+void Model::RenderFaces(Color* cols) {
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		PAE3D_Polygon poly = m_pPolyArray[i];
+		PAE3D_Material mat = cols->GetMaterial(poly.mat);
 		if(picking){
 			int id = i + PAE3D_COLORPADDING;
 			int r = (id & 0x000000FF) >> 0;
@@ -574,7 +584,7 @@ void Model::RenderFaces() {
 			glColor3f(0.5, 0.3, 0.5);
 		}
 		else {
-			glColor3f(0.77, 0.77, 0.5);
+			glColor4f(mat.col.r, mat.col.g, mat.col.b, mat.col.a);
 		}
 		glNormal3f(poly.n.x, poly.n.y, poly.n.z);
 		glBegin(GL_POLYGON);
@@ -599,7 +609,7 @@ void Model::RenderPicker(float zoom, int handleMode) {
 	picking = true;
 	switch (m_SelectMode) {
 	case PAE3D_SELECT_FACES:
-		RenderFaces();
+		RenderFaces(NULL);
 		break;
 	case PAE3D_SELECT_EDGES:
 		RenderEdges(zoom);
@@ -931,7 +941,7 @@ void Model::Extrude(){
 		if (m_pEdgeArray[i].selected) {edgeCount++;}
 	}*/
 	int* tempVertsInd = new int[vertCount];
-	//int* tempEdgeInd = new int[edgeCount];
+	//int* tempEdgeInd = new int[edgandeCount];
 	PAE3D_Point* tempVerts = new PAE3D_Point[vertCount];
 	PAE3D_Edge* tempEdges = new PAE3D_Edge[vertCount];
 

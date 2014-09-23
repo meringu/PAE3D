@@ -19,9 +19,19 @@ struct PAE3D_Point {
 	float y;
 	float z;
 	bool selected;
+	unsigned int* faces;
+	int faceCount;
 };
 
 typedef PAE3D_Point PAE3D_Normal;
+
+struct PAE3D_Vertex {
+	float x;
+	float y;
+	float z;
+	bool selected;
+
+};
 
 struct PAE3D_Edge {
 	unsigned int v1;
@@ -42,4 +52,16 @@ struct PAE3D_Polygon {
 	unsigned int* vertices;
 	unsigned int* edges;
 	int c;					// used for subdivision
+	int mat;
+};
+
+struct PAE3D_RGBA {
+        float r;
+        float g;
+        float b;
+        float a;
+};
+
+struct PAE3D_Material {
+	PAE3D_RGBA col;
 };
