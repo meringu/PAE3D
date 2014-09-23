@@ -6,5 +6,6 @@ public:
 	Color(void (*p)(void), void (*r)(void));
 	~Color(void);
 	void Open();
-	PAE3D_Material GetMaterial(int);
+	PAE3D_Material* GetMaterial(int);
+	int GetCurrentMaterial();
 };

@@ -14,16 +14,21 @@
 #define PAE3D_HANLE_MOVE 0
 #define PAE3D_HANLE_SCALE 1
 
+struct PAE3D_Normal {
+	float x;
+	float y;
+	float z;
+};
+
 struct PAE3D_Point {
 	float x;
 	float y;
 	float z;
 	bool selected;
-	unsigned int* faces;
-	int faceCount;
+	unsigned int* edges;
+	int edgeCount;
+	PAE3D_Normal n;
 };
-
-typedef PAE3D_Point PAE3D_Normal;
 
 struct PAE3D_Vertex {
 	float x;

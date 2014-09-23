@@ -8,11 +8,13 @@ void (*startColor)(void);
 void (*repostMain)(void);
 void Display(void);
 void Click(int, int, int, int);
+void Move(int, int);
 
 PAE3D_Material* mats;
 int matCount;
 GLint wind;
-int cur;
+int cur = 0;
+bool leftDown = false;
 
 Color::Color(void (*p)(void), void (*r)(void)) {
 	startColor = p;
@@ -37,20 +39,49 @@ void Color::Open() {
 	wind = glutCreateWindow("Color Picker");
 	glutDisplayFunc(Display);
 	glutMouseFunc(Click);
+	glutMotionFunc(Move);
 	glClearColor(1, 1, 1, 1);
 	glutMainLoop();
 }
 
-PAE3D_Material Color::GetMaterial(int i) {
-	if (i < 0 || i > matCount) return mats[0];
-	return mats[i];
+PAE3D_Material* Color::GetMaterial(int i) {
+	if (i < 0 || i > matCount) return &mats[0];
+	return &mats[i];
 }
 
-void Click(int button, int state, int x, int y){
+int Color::GetCurrentMaterial() {
+	return cur;
+}
+
+void Click(int button, int state, int x, int y) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
-	int width = glutGet(GLUT_WINDOW_WIDTH);
 	float percY = -(y / (height / 2.0) - 1);
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+	if (button == GLUT_LEFT_BUTTON) {
+		if (state == GLUT_DOWN) {
+			leftDown = true;
+			if (percY > 0.8) {
+				mats[0].col.r = (x - 1) / 256.0;
+			}
+			else if (percY > 0.6) {
+				mats[0].col.g = (x - 1) / 256.0;
+			}
+			else if (percY > 0.4) {
+				mats[0].col.b = (x - 1) / 256.0;
+			}
+		}
+		else {
+			leftDown = false;
+		}
+	}
+	glutPostRedisplay();
+	repostMain();
+	startColor();
+}
+
+void Move(int x, int y) {
+	int height = glutGet(GLUT_WINDOW_HEIGHT);
+	float percY = -(y / (height / 2.0) - 1);
+	if (leftDown) {
 		if (percY > 0.8) {
 			mats[0].col.r = (x - 1) / 256.0;
 		}
@@ -63,6 +94,7 @@ void Click(int button, int state, int x, int y){
 	}
 	glutPostRedisplay();
 	repostMain();
+	startColor();
 }
 
 void Display() {

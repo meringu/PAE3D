@@ -37,7 +37,7 @@ public:
 	void DeselectEverything();
 	void RenderVertices(float);
 	void RenderEdges(float);
-	void RenderFaces(Color*);
+	void RenderFaces(Color*, bool);
 	void RenderSelectedFacesHandle(float, int);
 	void Smooth();
 	void AddVertex(PAE3D_Point);
@@ -46,12 +46,15 @@ public:
 	void AddNormal();
 	unsigned int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float, int);
-	void ProcessSelection(int, int, bool, bool);
+	void ProcessSelection(int, int, bool, bool, int);
 	void SetSelectType(int);
 	void CascadeFaceSelection(int);
 	void CascadeEdgeSelection(int);
 	void CascadeVertexSelection();
 	void Extrude();
+	void Duplicate();
+	void CalculateNormal(int);
+	void AssignIntermediatePointers();
 
 	//debug
 	void PAE3D_PrintPoly (PAE3D_Polygon p);

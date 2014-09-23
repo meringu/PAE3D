@@ -19,9 +19,12 @@ Model* g_model = NULL;
 #define PAE3D_SELECT_LEFT 3
 #define PAE3D_LEFTCLICK_NOTHING 0
 #define PAE3D_LEFTCLICK_COLOR 1
+#define PAE3D_EDIT_MODE 0
+#define PAE3D_PHONG_MODE 1
 
+int displayMode = PAE3D_EDIT_MODE;
 int handleMode = PAE3D_HANLE_MOVE;
-int leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
+int leftCLickOperation;
 int mode = PAE3D_RENDER;
 bool q_middleClickDown = false;
 bool q_leftClickDown = false;
@@ -32,7 +35,8 @@ bool m_ctrlDownLastMiddleClick = false, m_shiftDownLastMiddleClick = false;
 PAE3D_Point g_center;
 Color* g_color;
 
-void PAE3D_Display() ;
+void PAE3D_DisplayMode(int);
+void PAE3D_Display();
 void PAE3D_Reshape(int w, int h);
 void PAE3D_SetLights();
 void PAE3D_SetCamera();
@@ -46,6 +50,7 @@ void PAE3D_LeftCLickColor();
 void PAE3D_RepostMain();
 
 int main(int argc, char** argv) {
+	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -66,6 +71,10 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+void PAE3D_DisplayMode(int mode) {
+	displayMode = mode;
+}
+
 void PAE3D_RepostMain() {
 	glutSetWindow(g_mainWnd);
 	glutPostRedisplay();
@@ -83,24 +92,36 @@ void PAE3D_Display() {
 	glShadeModel(GL_SMOOTH);
 	switch (mode) {
 	case PAE3D_RENDER:
-		glDisable(GL_LIGHTING);
-		PAE3D_RenderGrid();
-		PAE3D_RenderAxes();
-		g_model->RenderVertices(zoom);
-		g_model->RenderEdges(zoom);
-		glEnable(GL_LIGHTING);
-		g_model->RenderFaces(g_color);
+		switch (displayMode) {
+		case PAE3D_EDIT_MODE:
+			glDisable(GL_LIGHTING);
+			PAE3D_RenderGrid();
+			PAE3D_RenderAxes();
+			g_model->RenderVertices(zoom);
+			g_model->RenderEdges(zoom);
+			glEnable(GL_LIGHTING);
+			g_model->RenderFaces(g_color, false);
+			break;
+		case PAE3D_PHONG_MODE:
+			glEnable(GL_LIGHTING);
+			g_model->RenderFaces(g_color, true);
+			break;
+		}
 		break;
 	case PAE3D_SELECT_RIGHT:
 		glDisable(GL_LIGHTING);
 		g_model->RenderPicker(zoom, handleMode);
-		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, false);
+		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, false, -1);
 		glEnable(GL_LIGHTING);
 		break;
 	case PAE3D_SELECT_LEFT:
 		glDisable(GL_LIGHTING);
 		g_model->RenderPicker(zoom, handleMode);
-		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, true);
+		int mat = -1;
+		if (leftCLickOperation == PAE3D_LEFTCLICK_COLOR) {
+			mat = g_color->GetCurrentMaterial();
+		}
+		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, true, mat);
 		glEnable(GL_LIGHTING);
 		break;
 	}
@@ -159,12 +180,16 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	case 'c':
 		g_color->Open();
 		break;
+	case 'p':
+		displayMode++;
+		displayMode%=2;
+		break;
 	}
 	glutPostRedisplay();
 }
 
 void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
-	(void)x;http://openglut.sourceforge.net/group__windowcallback.html
+	(void)x;
 	(void)y;
 	int sp = glutGetModifiers();
 	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
