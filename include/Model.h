@@ -55,6 +55,9 @@ public:
 	void Duplicate();
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
+	void Subdivide();
+	void Subdivide(int);
+	unsigned int FindEdgeUsingDependancies(unsigned int, unsigned  int);
 
 	//debug
 	void PAE3D_PrintPoly (PAE3D_Polygon p);

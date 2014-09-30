@@ -184,6 +184,9 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		displayMode++;
 		displayMode%=2;
 		break;
+	case 'd':
+		g_model->Subdivide();
+		break;
 	}
 	glutPostRedisplay();
 }
