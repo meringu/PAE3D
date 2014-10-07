@@ -12,6 +12,7 @@
 #define PAE3D_SELECT_Y_HANDLE 1
 #define PAE3D_SELECT_Z_HANDLE 2
 #define PAE3D_COLORPADDING 3
+#define PAE3D_RENDER_NORMALS false
 
 class Model
 {
@@ -58,6 +59,9 @@ public:
 	void Duplicate();
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
+	void Subdivide();
+	void Subdivide(int);
+	unsigned int FindEdgeUsingDependancies(unsigned int, unsigned  int);
 	void ResetHandlePosition();
 
 	//debug

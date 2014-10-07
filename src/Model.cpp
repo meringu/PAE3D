@@ -176,7 +176,6 @@ void Model::AssignIntermediatePointers() {
 			else {
 				m_pEdgeArray[edge].poly1 = i;
 				m_pEdgeArray[edge].hasPoly1 = true;
-
 			}
 		}
 	}
@@ -189,13 +188,30 @@ void Model::AssignIntermediatePointers() {
 	for (int i = 0; i < m_nNumEdge; i++) {
 		int v1 = m_pEdgeArray[i].v1;
 		if (m_pVertexArray[v1].edgeCount == 0) {
-			m_pVertexArray[v1].edges = new unsigned int[3];
+			m_pVertexArray[v1].edges = new unsigned int[1];
+		}
+		else {
+			unsigned int* old1 = m_pVertexArray[v1].edges;
+			m_pVertexArray[v1].edges = new unsigned int[m_pVertexArray[v1].edgeCount+1];
+			for (int j = 0; j < m_pVertexArray[v1].edgeCount; j++) {
+				m_pVertexArray[v1].edges[j] = old1[j];
+			}
+			delete (old1);
 		}
 		m_pVertexArray[v1].edges[m_pVertexArray[v1].edgeCount] = i;
 		m_pVertexArray[v1].edgeCount++;
+
 		int v2 = m_pEdgeArray[i].v2;
 		if (m_pVertexArray[v2].edgeCount == 0) {
-			m_pVertexArray[v2].edges = new unsigned int[3];
+			m_pVertexArray[v2].edges = new unsigned int[1];
+		}
+		else {
+			unsigned int* old2 = m_pVertexArray[v2].edges;
+			m_pVertexArray[v2].edges = new unsigned int[m_pVertexArray[v2].edgeCount+1];
+			for(int j = 0; j < m_pVertexArray[v2].edgeCount; j++) {
+				m_pVertexArray[v2].edges[j] = old2[j];
+			}
+			delete(old2);
 		}
 		m_pVertexArray[v2].edges[m_pVertexArray[v2].edgeCount] = i;
 		m_pVertexArray[v2].edgeCount++;
@@ -307,18 +323,18 @@ void Model::DeleteVertex(int index){
 	 * cascade the changes to edges and faces setting them to empty if they have the vertex reference. All edges will
 	 * empty because they need two vertices. Face will only empty if their vert count goes below 4.
 	 *  */
-
+	(void)index;
 }
 void Model::DeletePoly(int index){
 	/* set face to empty. Just dont render it.
 	 * */
-
+	(void)index;
 }
 void Model::DeleteEdge(int index){
 	/*set to empty. Leave vertices alone if they have references else where. If a vertex no longer has references
 	 * set it to empty. Set both referenced edge faces to empty.
 	 * */
-
+	(void)index;
 }
 void Model::Smooth() {
 	// Catmull-Clark
@@ -468,22 +484,127 @@ void Model::Smooth() {
 		delete(oldVertices);
 		delete(oldEdges);
 	}
-	// assigning edges to all faces
-	for (int i = 0; i < m_nNumPolygon; i++) {
-		for (int j = 0; j < 4; j++) {
-			m_pPolyArray[i].edges[j] = FindEdge(m_pPolyArray[i].vertices[j], m_pPolyArray[i].vertices[(j+1)%(m_pPolyArray[i].vertexCount)]);
-			m_pEdgeArray[m_pPolyArray[i].edges[j]].selected = true;
-			if (m_pEdgeArray[m_pPolyArray[i].edges[j]].hasPoly1) {
-				m_pEdgeArray[m_pPolyArray[i].edges[j]].poly2 = i;
-				m_pEdgeArray[m_pPolyArray[i].edges[j]].hasPoly2 = true;
-			} else {
-				m_pEdgeArray[m_pPolyArray[i].edges[j]].poly1 = i;
-				m_pEdgeArray[m_pPolyArray[i].edges[j]].hasPoly1 = true;
+	DeselectEverything();
+	AssignIntermediatePointers();
+}
+
+void Model::Subdivide() {
+	for (int i = 0 ; i < m_nNumPolygon; i++) {
+		if (m_pPolyArray[i].selected) {
+			Subdivide(i);
+		}
+	}
+}
+
+void Model::Subdivide(int id) {
+	m_pPolyArray[id].c = m_nNumPoint;
+	AddVertex(PolyCenter(id));
+	m_pVertexArray[m_nNumPoint-1].selected = true;
+	// making edge points
+	for (int i = 0; i < m_pPolyArray[id].vertexCount; i++) {
+		int v1 = m_pPolyArray[id].vertices[i];
+		int v2 = m_pPolyArray[id].vertices[(i+1)%m_pPolyArray[i].vertexCount];
+		PAE3D_Point p;
+		p.x = (m_pVertexArray[v1].x + m_pVertexArray[v2].x)/2;
+		p.y = (m_pVertexArray[v1].y + m_pVertexArray[v2].y)/2;
+		p.z = (m_pVertexArray[v1].z + m_pVertexArray[v2].z)/2;
+		p.selected = true;
+		m_pEdgeArray[m_pPolyArray[id].edges[i]].c = m_nNumPoint;
+		AddVertex(p);
+	}
+	// joining face points to edge points
+	for (int i = 0; i < m_pPolyArray[id].vertexCount; i++) {
+		PAE3D_Edge e;
+		e.v1 = m_pPolyArray[id].c;
+		e.v2 = m_pEdgeArray[m_pPolyArray[id].edges[i]].c;
+		e.hasPoly1 = false;
+		e.hasPoly2 = false;
+		e.selected = true;
+		AddEdge(e);
+		m_pEdgeArray[m_pPolyArray[id].edges[i]].v2 = e.v2;
+		PAE3D_Edge e2;
+		e2.v1 = e.v2;
+		e2.v2 = m_pPolyArray[id].vertices[(i+1)%m_pPolyArray[id].vertexCount];
+		e2.hasPoly1 = false;
+		e2.hasPoly2 = false;
+		e2.selected = true;
+		AddEdge(e2);
+		//m_pVertexArray[m_pPolyArray[id].vertices[i]].z-=0.1;
+	}
+	for (int i = 0; i < m_pPolyArray[id].vertexCount; i++) {
+		int poly = m_pEdgeArray[m_pPolyArray[id].edges[i]].poly1;
+		if (poly == id) {
+			if (m_pEdgeArray[m_pPolyArray[id].edges[i]].hasPoly2) {
+				poly = m_pEdgeArray[m_pPolyArray[id].edges[i]].poly2;
+			}
+			else {
+				continue;
+			}
+		}
+		unsigned int* old = m_pPolyArray[poly].vertices;
+		m_pPolyArray[poly].vertexCount++;
+		m_pPolyArray[poly].vertices = new unsigned int[m_pPolyArray[poly].vertexCount];
+		int copied = 0;
+		for (int j = 0; j < m_pPolyArray[poly].vertexCount-1; j++) {
+			m_pPolyArray[poly].vertices[j + copied] = old[j];
+			if (copied == 0) {
+				bool here = false;
+				for (int k = 0; k < m_pPolyArray[id].vertexCount; k++) {
+					if (m_pPolyArray[id].vertices[k] == m_pPolyArray[poly].vertices[j]) {
+						if (m_pPolyArray[poly].vertices[j]) {
+							here = true;
+						}
+					}
+				}
+				if (here) {
+					copied = 1;
+					m_pPolyArray[poly].vertices[j + copied] = m_pEdgeArray[m_pPolyArray[id].edges[i]].c;
+				}
 			}
 		}
 	}
-	DeselectEverything();
+	unsigned int* oldVertices = m_pPolyArray[id].vertices;
+	unsigned int* oldEdges = m_pPolyArray[id].edges;
+	int oldVertexCount = m_pPolyArray[id].vertexCount;
+	m_pPolyArray[id].vertexCount = 4;
+	m_pPolyArray[id].vertices = new unsigned int[4];
+	m_pPolyArray[id].vertices[0] = oldVertices[0];
+	m_pPolyArray[id].vertices[1] = m_pEdgeArray[oldEdges[0]].c;
+	m_pPolyArray[id].vertices[2] = m_pPolyArray[id].c;
+	m_pPolyArray[id].vertices[3] = m_pEdgeArray[oldEdges[oldVertexCount - 1]].c;
+	m_pPolyArray[id].edges = new unsigned int[4];
+	m_pPolyArray[id].n = PolyNormal(id);
+
+	for (int j = 1; j < oldVertexCount; j++) {
+		PAE3D_Polygon poly1;
+		poly1.vertexCount = 4;
+		poly1.vertices = new unsigned int[4];
+		poly1.vertices[0] = oldVertices[j];
+		poly1.vertices[1] = m_pEdgeArray[oldEdges[j]].c;
+		poly1.vertices[2] = m_pPolyArray[id].c;
+		poly1.vertices[3] = m_pEdgeArray[oldEdges[j - 1]].c;
+
+		poly1.edges = new unsigned int[4];
+		poly1.edges[0] = 0;
+		poly1.edges[1] = 0;
+		poly1.edges[2] = 0;
+		poly1.edges[3] = 0;
+
+		poly1.mat = 0;
+		poly1.selected = false;
+
+		AddPoly(poly1);
+	}
+	delete (oldVertices);
+	delete (oldEdges);
+
 	AssignIntermediatePointers();
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].n = PolyNormal(i);
+	}
+	for (int i = 0; i < m_nNumPoint; i++) {
+		CalculateNormal(i);
+	}
 }
 
 void Model::PAE3D_PrintPoly(PAE3D_Polygon p) {
@@ -567,13 +688,16 @@ void Model::CalculateNormal(int id) {
 	m_pVertexArray[id].n = n;
 }
 
-unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
-	/*for (int i = 0; i < m_pVertexArray[v1].edgeCount; i++) {
+unsigned int Model::FindEdgeUsingDependancies(unsigned int v1, unsigned  int v2) {
+	for (int i = 0; i < m_pVertexArray[v1].edgeCount; i++) {
 		if (m_pEdgeArray[m_pVertexArray[v1].edges[i]].v1 == v2 || m_pEdgeArray[m_pVertexArray[v1].edges[i]].v1 == v2) {
 			return m_pVertexArray[v1].edges[i];
 		}
-	}*/
+	}
+	return -1;
+}
 
+unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
 	for (int i = 0; i < m_nNumEdge; i++) {
 		if ((m_pEdgeArray[i].v1 == v1 && m_pEdgeArray[i].v2 == v2)
 				|| (m_pEdgeArray[i].v2 == v1 && m_pEdgeArray[i].v1 == v2)) {
@@ -628,6 +752,11 @@ void Model::RenderEdges(float zoom) {
 		PAE3D_Edge edge = m_pEdgeArray[i];
 		PAE3D_Point p1 = m_pVertexArray[edge.v1];
 		PAE3D_Point p2 = m_pVertexArray[edge.v2];
+		if (p1.z < p2.z) {
+			PAE3D_Point tempP = p1;
+			p1 = p2;
+			p2 = tempP;
+		}
 		glPushMatrix();
 		glTranslatef(p2.x, p2.y, p2.z);
 		float length = sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y)+(p1.z-p2.z)*(p1.z-p2.z));
@@ -690,12 +819,14 @@ void Model::RenderFaces(Color* cols, bool phong) {
 		glEnd();
 		glColor3f(1, 0, 0);
 		// RENDER NORMALS
-		glBegin(GL_LINES);
-		PAE3D_Point p = PolyCenter(i);
-		PAE3D_Normal n = poly.n;
-		glVertex3f(p.x, p.y, p.z);
-		glVertex3f(p.x + n.x, p.y + n.y, p.z + n.z);
-		glEnd();
+		if (PAE3D_RENDER_NORMALS) {
+			glBegin(GL_LINES);
+			PAE3D_Point p = PolyCenter(i);
+			PAE3D_Normal n = poly.n;
+			glVertex3f(p.x, p.y, p.z);
+			glVertex3f(p.x + n.x, p.y + n.y, p.z + n.z);
+			glEnd();
+		}
 	}
 }
 
