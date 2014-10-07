@@ -43,6 +43,9 @@ public:
 	void AddVertex(PAE3D_Point);
 	void AddEdge(PAE3D_Edge);
 	void AddPoly(PAE3D_Polygon);
+	void DeletePoly(int);
+	void DeleteVertex(int);
+	void DeleteEdge(int);
 	void AddNormal();
 	unsigned int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float, int);
@@ -55,6 +58,7 @@ public:
 	void Duplicate();
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
+	void ResetHandlePosition();
 
 	//debug
 	void PAE3D_PrintPoly (PAE3D_Polygon p);

@@ -25,6 +25,7 @@ struct PAE3D_Point {
 	float y;
 	float z;
 	bool selected;
+	bool empty;
 	unsigned int* edges;
 	int edgeCount;
 	PAE3D_Normal n;
@@ -35,7 +36,6 @@ struct PAE3D_Vertex {
 	float y;
 	float z;
 	bool selected;
-
 };
 
 struct PAE3D_Edge {
@@ -47,11 +47,13 @@ struct PAE3D_Edge {
 	unsigned int poly1;
 	unsigned int poly2;
 	bool selected;
+	bool empty;
 	unsigned int nextEdge;	// used for subdivision
 };
 
 struct PAE3D_Polygon {
 	bool selected;
+	bool empty;
 	PAE3D_Normal n;
 	int vertexCount;
 	unsigned int* vertices;
