@@ -106,7 +106,7 @@ void PAE3D_Display() {
 			break;
 		case PAE3D_PHONG_MODE:
 			glDisable(GL_LIGHTING);
-			glDisable(GL_COLOR_MATERIAL);
+			glEnable(GL_COLOR_MATERIAL);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glBindTexture(GL_TEXTURE_2D, skyBox);
