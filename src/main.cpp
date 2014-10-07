@@ -5,6 +5,7 @@
 #include <math.h>
 #include "define.h"
 #include "Model.h"
+#include "ImageLoader.h"
 #include <iostream>
 #include "Color.h"
 
@@ -34,6 +35,7 @@ bool m_ctrlDownNow = false, m_shiftDownNow = false;
 bool m_ctrlDownLastMiddleClick = false, m_shiftDownLastMiddleClick = false;
 PAE3D_Point g_center;
 Color* g_color;
+GLuint skyBox;
 
 void PAE3D_DisplayMode(int);
 void PAE3D_Display();
@@ -50,6 +52,7 @@ void PAE3D_LeftCLickColor();
 void PAE3D_RepostMain();
 
 int main(int argc, char** argv) {
+	skyBox = openTexture("cubemap.jpg");
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
 	glutInit(&argc, argv);
@@ -66,7 +69,6 @@ int main(int argc, char** argv) {
     glutKeyboardUpFunc(PAE3D_KeyboardUp);
     PAE3D_SetLights();
 	PAE3D_SetCamera();
-
 	glutMainLoop();
     return 0;
 }
@@ -103,6 +105,25 @@ void PAE3D_Display() {
 			g_model->RenderFaces(g_color, false);
 			break;
 		case PAE3D_PHONG_MODE:
+			glDisable(GL_LIGHTING);
+			glDisable(GL_COLOR_MATERIAL);
+			glEnable(GL_TEXTURE_2D);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glBindTexture(GL_TEXTURE_2D, skyBox);
+
+			glBegin(GL_QUADS);
+			glColor3f(1, 1, 1);
+			glTexCoord2f(0, 0);
+			glVertex3f(10, 10, -10);
+			glTexCoord2f(1, 0);
+			glVertex3f(-10, 10, -10);
+			glTexCoord2f(1, 1);
+			glVertex3f(-10, -10, -10);
+			glTexCoord2f(0, 1);
+			glVertex3f(10, -10, -10);
+			glEnd();
+			glDisable(GL_TEXTURE_2D);
+			glEnable(GL_COLOR_MATERIAL);
 			glEnable(GL_LIGHTING);
 			g_model->RenderFaces(g_color, true);
 			break;

@@ -12,6 +12,7 @@
 #define PAE3D_SELECT_Y_HANDLE 1
 #define PAE3D_SELECT_Z_HANDLE 2
 #define PAE3D_COLORPADDING 3
+#define PAE3D_RENDER_NORMALS true
 
 class Model
 {
@@ -43,6 +44,9 @@ public:
 	void AddVertex(PAE3D_Point);
 	void AddEdge(PAE3D_Edge);
 	void AddPoly(PAE3D_Polygon);
+	void DeletePoly(int);
+	void DeleteVertex(int);
+	void DeleteEdge(int);
 	void AddNormal();
 	unsigned int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float, int);
@@ -58,6 +62,7 @@ public:
 	void Subdivide();
 	void Subdivide(int);
 	unsigned int FindEdgeUsingDependancies(unsigned int, unsigned  int);
+	void ResetHandlePosition();
 
 	//debug
 	void PAE3D_PrintPoly (PAE3D_Polygon p);
