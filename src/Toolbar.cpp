@@ -2,6 +2,7 @@
 #include <GL/glut.h>
 #include <stdio.h>
 #include <math.h>
+#include "ImageLoader.h"
 
 using namespace std;
 
@@ -22,6 +23,12 @@ int mouseX =0;
 int mouseY =0;
 int currentButton = 0;
 
+int buttonCount = 12;
+
+GLuint buttonSelectFaces;
+GLuint buttonSelectEdges;
+GLuint buttonSelectPoints;
+
 Toolbar::Toolbar(void (*i)(int)) {
 	startId = i;
 	currentButton = 0;
@@ -34,10 +41,13 @@ Toolbar::~Toolbar() {
 void Toolbar::Open(unsigned int mainWin, int width) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	barToMainWind = mainWin;
-	barWind = glutCreateSubWindow(mainWin,0,0,640,35);
+	barWind = glutCreateSubWindow(mainWin,0,0,32*buttonCount,32);
 	glClearColor(0,0,0,0);
 	glutDisplayFunc(BarDisplay);
 	BarSetCamera();
+	buttonSelectFaces = openTexture("buttonselectfaces.png");
+	buttonSelectEdges = openTexture("buttonselectedges.png");
+	buttonSelectPoints = openTexture("buttonselectpoints.png");
 	glutReshapeFunc(BarReshape);
 	glutMouseFunc(BarClick);
 	glutMotionFunc(BarMove);
@@ -89,8 +99,8 @@ void Toolbar::stop(){
 }
 
 void BarReshape(int w, int h){
-	glutReshapeWindow(w,35);
-    glViewport(0, 0, w, 35);
+	glutReshapeWindow(w,32);
+    glViewport(0, 0, w, 32);
 
     glutPostRedisplay();
 }
@@ -128,32 +138,57 @@ void ProcessButton(int x, int y){
 
 void DrawButtons(bool picking){
 	float indent = -3.0;
-	for(int i=0; i<12; i++){
-	glPushMatrix();
+	for (int i = 0; i < 12; i++) {
+		glPushMatrix();
 
-	glTranslatef(indent+(0.35*i),0,0);
-	glBegin(GL_QUADS);
-	if(!picking){
-	/* put textures here */
-	glColor3f(1, 0, 0);
-	}else{
-		int id = i+1;
-		int r = (id & 0x000000FF) >> 0;
-		int g = (id & 0x0000FF00) >> 8;
-		int b = (id & 0x00FF0000) >> 16;
-		glColor3f(r/255.0, g/255.0, b/255.0);
-	}
-	glTexCoord2f(0, 0);
-	glVertex3f(0.15, 0.15, 0);
-	glTexCoord2f(1, 0);
-	glVertex3f(-0.15, 0.15, 0);
-	glTexCoord2f(1, 1);
-	glVertex3f(-0.15, -0.15, 0);
-	glTexCoord2f(0, 15);
-	glVertex3f(0.15, -0.15, 0);
+		//glTranslatef(indent + (0.35 * i), 0, 0);
 
-	glEnd();
-	glPopMatrix();
+		if (!picking) {
+
+			if (i < 3) {
+				glEnable(GL_TEXTURE_2D);
+				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				switch(i) {
+				case 0:
+					glBindTexture(GL_TEXTURE_2D, buttonSelectFaces);
+					break;
+				case 1:
+					glBindTexture(GL_TEXTURE_2D, buttonSelectEdges);
+					break;
+				case 2:
+					glBindTexture(GL_TEXTURE_2D, buttonSelectPoints);
+					break;
+				}
+			}
+			/* put textures here */
+			glColor3f(1, 0, 0);
+		} else {
+			int id = i + 1;
+			int r = (id & 0x000000FF) >> 0;
+			int g = (id & 0x0000FF00) >> 8;
+			int b = (id & 0x00FF0000) >> 16;
+			glColor3f(r / 255.0, g / 255.0, b / 255.0);
+		}
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex3f(-1 + i * 2.0/buttonCount, -1, 0);
+		glTexCoord2f(1, 0);
+		glVertex3f(-1 + (i+1) * 2.0/buttonCount, -1, 0);
+		glTexCoord2f(1, 1);
+		glVertex3f(-1 + (i+1) * 2.0/buttonCount, 1, 0);
+		glTexCoord2f(0, 1);
+		glVertex3f(-1 + i * 2.0/buttonCount, 1, 0);
+		glEnd();
+		if (!picking) {
+
+			if (i < 3) {
+				glDisable(GL_TEXTURE_2D);
+			}
+		}
+
+
+		glPopMatrix();
 	}
 }
 
@@ -161,7 +196,7 @@ void DrawButtons(bool picking){
 void BarSetCamera() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(PAE3D_FOVY, (double) 640 / (double) (35), PAE3D_ZNEAR_3D, PAE3D_ZFAR_3D);
+	//gluPerspective(PAE3D_FOVY, (double) 640 / (double) (35), PAE3D_ZNEAR_3D, PAE3D_ZFAR_3D);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 

@@ -95,15 +95,14 @@ int main(int argc, char** argv) {
 
 void PAE3D_ButtonPushed (int button) {
 	switch(button) {
-
 		case 1:
 			g_model->SetSelectType(PAE3D_SELECT_FACES);
 			break;
 		case 2:
-			g_model->SetSelectType(PAE3D_SELECT_VERTICES);
+			g_model->SetSelectType(PAE3D_SELECT_EDGES);
 			break;
 		case 3:
-			g_model->SetSelectType(PAE3D_SELECT_EDGES);
+			g_model->SetSelectType(PAE3D_SELECT_VERTICES);
 			break;
 		case 4:
 			handleMode = PAE3D_HANLE_MOVE;

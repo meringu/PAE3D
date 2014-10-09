@@ -526,7 +526,6 @@ void Model::Subdivide() {
 				e.v2 = m_pEdgeArray[m_pPolyArray[i].edges[j]].c;
 				e.hasPoly1 = false;
 				e.hasPoly2 = false;
-				printf("%d\n",e.c);
 				AddEdge(e);
 			}
 		}
@@ -547,29 +546,37 @@ void Model::Subdivide() {
 			e.hasPoly1 = false;
 			e.hasPoly2 = false;
 			e.selected = true;
-			int c = m_nNumPoint;
+			int c = m_pEdgeArray[i].c;
+			int en = m_nNumPoint;
 			AddEdge(e);
 			m_pEdgeArray[i].v2 = m_pEdgeArray[i].c;
 			m_pEdgeArray[i].hasPoly1 = false;
 			m_pEdgeArray[i].hasPoly2 = false;
+			// fixing adding c to adjacent polygon
 			if (other != -1) {
-				/*m_pPolyArray[other].vertexCount++;
+				m_pPolyArray[other].vertexCount++;
 				unsigned int* oldVerts = m_pPolyArray[other].vertices;
 				unsigned int* oldEdges = m_pPolyArray[other].edges;
 				m_pPolyArray[other].vertices = new unsigned int[m_pPolyArray[other].vertexCount];
 				m_pPolyArray[other].edges = new unsigned int[m_pPolyArray[other].vertexCount];
 				int copied = 0;
-				for (int j = 0; j < m_pPolyArray[other].vertexCount - 1) {
+				for (int j = 0; j < m_pPolyArray[other].vertexCount - 1; j++) {
+					printf("%d\n", j);
 					m_pPolyArray[other].vertices[j+copied] = oldVerts[j];
-					if (-1 == FindEdge(oldVerts[j], oldVerts[(j+1)%m_pPolyArray[other].vertexCount-1])) {
+					if (-1 == FindEdge(oldVerts[j], oldVerts[(j+1)%(m_pPolyArray[other].vertexCount-1)])) {
+						m_pPolyArray[other].edges[j+copied] = FindEdge(oldVerts[j], c);
 						copied++;
+						m_pPolyArray[other].vertices[j+copied] = c;
+						m_pPolyArray[other].edges[j+copied] = FindEdge(oldVerts[(j+1)%(m_pPolyArray[other].vertexCount-1)], c);
 					} else {
-						m_pPolyArray[other].edges[j+copied];
+						m_pPolyArray[other].edges[j+copied] = oldEdges[j];
 					}
-				}*/
+				}
+				printf("done\n");
 			}
 		}
 	}
+	printf("done2\n");
 	// creating new faces
 	for (unsigned int i = 0; i < polys; i++) {
 		if (m_pPolyArray[i].selected) {
@@ -606,6 +613,12 @@ void Model::Subdivide() {
 		}
 	}
 	AssignIntermediatePointers();
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].n = PolyNormal(i);
+	}
+	for (int i = 0; i < m_nNumPoint; i++) {
+		CalculateNormal(i);
+	}
 }
 
 void Model::MoveSelected(float dx, float dy, float dz) {
