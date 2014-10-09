@@ -8,6 +8,7 @@
 #include "ImageLoader.h"
 #include <iostream>
 #include "Color.h"
+#include "Toolbar.h"
 
 using namespace std;
 
@@ -15,6 +16,7 @@ GLuint g_mainWnd;
 GLuint g_nWinWidth = PAE3D_WIN_WIDTH;
 GLuint g_nWinHeight = PAE3D_WIN_HEIGHT;
 Model* g_model = NULL;
+Toolbar* g_toolbar = NULL;
 #define PAE3D_RENDER 1
 #define PAE3D_SELECT_RIGHT 2
 #define PAE3D_SELECT_LEFT 3
@@ -36,6 +38,8 @@ bool m_ctrlDownLastMiddleClick = false, m_shiftDownLastMiddleClick = false;
 PAE3D_Point g_center;
 Color* g_color;
 GLuint skyBox;
+bool subToggle = false;
+int prev = -1;
 
 void PAE3D_DisplayMode(int);
 void PAE3D_Display();
@@ -50,9 +54,10 @@ void PAE3D_KeyboardDown(unsigned char, int, int);
 void PAE3D_KeyboardUp(unsigned char, int, int);
 void PAE3D_LeftCLickColor();
 void PAE3D_RepostMain();
+void PAE3D_ButtonPushed(int);
 
 int main(int argc, char** argv) {
-	skyBox = openTexture("cubemap.jpg");
+	//skyBox = openTexture("cubemap.jpg");
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
 	glutInit(&argc, argv);
@@ -69,8 +74,56 @@ int main(int argc, char** argv) {
     glutKeyboardUpFunc(PAE3D_KeyboardUp);
     PAE3D_SetLights();
 	PAE3D_SetCamera();
+
+    g_toolbar = new Toolbar(PAE3D_ButtonPushed);
+    g_toolbar->Open(g_mainWnd,g_nWinWidth);
+
 	glutMainLoop();
     return 0;
+}
+
+void PAE3D_ButtonPushed (int button) {
+	switch(button) {
+
+		case 1:
+			g_model->SetSelectType(PAE3D_SELECT_FACES);
+			break;
+		case 2:
+			g_model->SetSelectType(PAE3D_SELECT_VERTICES);
+			break;
+		case 3:
+			g_model->SetSelectType(PAE3D_SELECT_EDGES);
+			break;
+		case 4:
+			handleMode = PAE3D_HANLE_MOVE;
+			break;
+		case 5:
+			handleMode = PAE3D_HANLE_SCALE;
+			break;
+		case 6:
+			g_model->Extrude();
+			break;
+		case 7:
+			if(!subToggle){
+			subToggle = true;
+			g_color->Open(g_mainWnd);}
+			else{
+			if(!g_color->IsVisable()){
+				g_color->Open(g_mainWnd);
+			}
+			subToggle = false;}
+			break;
+		case 8:
+			displayMode++;
+			displayMode%=2;
+			break;
+		case 9:
+			g_model->Subdivide();
+			break;
+		case 10:
+			g_model->Smooth();
+			break;
+	}
 }
 
 void PAE3D_DisplayMode(int mode) {
@@ -87,11 +140,29 @@ void PAE3D_LeftCLickColor() {
 }
 
 void PAE3D_Display() {
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glShadeModel(GL_SMOOTH);
+
+	//int num = g_toolbar->getCurrentButton();
+	/*
+	if(num>0){
+		if(prev != num){
+			//printf(" oper %i \n", num);
+			if(num == 1){
+				g_model->Extrude();
+			}
+			prev  = num;
+		}
+		g_toolbar->stop();
+		}
+	if(num==0){
+		prev  = num;
+	}*/
+
 	switch (mode) {
 	case PAE3D_RENDER:
 		switch (displayMode) {
@@ -162,11 +233,21 @@ void PAE3D_Display() {
 void PAE3D_Reshape(int w, int h) {
     if (h == 0) h = 1;
 
-	g_nWinWidth = w;
-	g_nWinHeight = h;
+	if(w>= PAE3D_WIN_WIDTH){
+		g_nWinWidth = w;
+	}else{	g_nWinWidth = PAE3D_WIN_WIDTH;}
 
-    glViewport(0, 0, g_nWinWidth, g_nWinHeight);
+	if(h>= PAE3D_WIN_HEIGHT){
+		g_nWinHeight = h;
+	}else{	g_nWinHeight = PAE3D_WIN_HEIGHT;}
+
+	if(!subToggle){
+		g_color->Close();
+	}
+	glutReshapeWindow(g_nWinWidth,g_nWinHeight);
+	glViewport(0, 0, g_nWinWidth, g_nWinHeight);
     PAE3D_SetCamera();
+
     glutPostRedisplay();
 }
 
@@ -176,6 +257,7 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	int sp = glutGetModifiers();
 	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
 	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
+
 	switch (key) {
 	case ' ':
 		g_model->Smooth();
@@ -199,7 +281,14 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		g_model->Extrude();
 		break;
 	case 'c':
-		g_color->Open();
+		if(!subToggle){
+		subToggle = true;
+		g_color->Open(g_mainWnd);}
+		else{
+		if(!g_color->IsVisable()){
+			g_color->Open(g_mainWnd);
+		}
+		subToggle = false;}
 		break;
 	case 'p':
 		displayMode++;

@@ -9,7 +9,7 @@ SRC = src/
 
 all: $(BUILD)Pro1
 
-$(BUILD)Pro1: $(BUILD)main.o $(BUILD)Model.o $(BUILD)Color.o $(BUILD)Handle.o $(BUILD)ImageLoader.o
+$(BUILD)Pro1: $(BUILD)main.o $(BUILD)Model.o $(BUILD)Color.o $(BUILD)Handle.o $(BUILD)ImageLoader.o $(BUILD)Toolbar.o
 	$(CC) -o $@ $^ $(LPATH) $(LDPATH) $(LIBS)
 	
 $(BUILD)%.o: $(SRC)%.cpp
