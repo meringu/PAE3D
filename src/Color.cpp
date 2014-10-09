@@ -9,8 +9,6 @@ void (*repostMain)(void);
 void Display(void);
 void Click(int, int, int, int);
 void Move(int, int);
-void ColKeyboard(unsigned char, int, int);
-void Resize(int, int);
 void leftf();
 void rightf();
 void addf();

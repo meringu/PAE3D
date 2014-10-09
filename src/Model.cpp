@@ -13,145 +13,311 @@ using namespace std;
 int numVert, numNorm, numUV, numFace;
 GLUquadric* quadric = gluNewQuadric();
 
-Model::Model() {
-	SelectedHandle = PAE3D_SELECT_NO_HANDLE;
-	m_SelectMode = PAE3D_SELECT_FACES;
-	m_hasSelected = false;
-	picking = false;
+Model::Model(char* filename) {
+	if (filename == NULL) {
+		SelectedHandle = PAE3D_SELECT_NO_HANDLE;
+		m_SelectMode = PAE3D_SELECT_FACES;
+		m_hasSelected = false;
+		picking = false;
 
-	m_pVertexArray = NULL;
-	m_pEdgeArray = NULL;
-	m_pPolyArray= NULL;
+		m_pVertexArray = NULL;
+		m_pEdgeArray = NULL;
+		m_pPolyArray= NULL;
 
-	m_nNumPoint = 8;
+		m_nNumPoint = 8;
+		m_pVertexArray = new PAE3D_Point[m_nNumPoint];
+		m_pVertexArray[0].x = 0.5;
+		m_pVertexArray[0].y = 0.5;
+		m_pVertexArray[0].z = 0.5;
+		m_pVertexArray[1].x = -0.5;
+		m_pVertexArray[1].y = 0.5;
+		m_pVertexArray[1].z = 0.5;
+		m_pVertexArray[2].x = -0.5;
+		m_pVertexArray[2].y = -0.5;
+		m_pVertexArray[2].z = 0.5;
+		m_pVertexArray[3].x = 0.5;
+		m_pVertexArray[3].y = -0.5;
+		m_pVertexArray[3].z = 0.5;
+		m_pVertexArray[4].x = 0.5;
+		m_pVertexArray[4].y = 0.5;
+		m_pVertexArray[4].z = -0.5;
+		m_pVertexArray[5].x = -0.5;
+		m_pVertexArray[5].y = 0.5;
+		m_pVertexArray[5].z = -0.5;
+		m_pVertexArray[6].x = -0.5;
+		m_pVertexArray[6].y = -0.5;
+		m_pVertexArray[6].z = -0.5;
+		m_pVertexArray[7].x = 0.5;
+		m_pVertexArray[7].y = -0.5;
+		m_pVertexArray[7].z = -0.5;
+
+		m_nNumPolygon = 6;
+		m_pPolyArray = new PAE3D_Polygon[m_nNumPolygon];
+
+		unsigned int* points = new unsigned int[4];
+		points[0] = 0;
+		points[1] = 1;
+		points[2] = 2;
+		points[3] = 3;
+		m_pPolyArray[0].vertices = points;
+		points = new unsigned int[4];
+		points[0] = 7;
+		points[1] = 6;
+		points[2] = 5;
+		points[3] = 4;
+		m_pPolyArray[1].vertices = points;
+		points = new unsigned int[4];
+		points[0] = 1;
+		points[1] = 5;
+		points[2] = 6;
+		points[3] = 2;
+		m_pPolyArray[2].vertices = points;
+		points = new unsigned int[4];
+		points[0] = 4;
+		points[1] = 0;
+		points[2] = 3;
+		points[3] = 7;
+		m_pPolyArray[3].vertices = points;
+		points = new unsigned int[4];
+		points[0] = 4;
+		points[1] = 5;
+		points[2] = 1;
+		points[3] = 0;
+		m_pPolyArray[4].vertices = points;
+		points = new unsigned int[4];
+		points[0] = 3;
+		points[1] = 2;
+		points[2] = 6;
+		points[3] = 7;
+		m_pPolyArray[5].vertices = points;
+
+		for (int i = 0 ; i < m_nNumPoint; i++) {
+			m_pVertexArray[i].edgeCount = 0;
+		}
+		for (int i = 0; i < m_nNumPolygon; i++) {
+			m_pPolyArray[i].selected = false;
+			m_pPolyArray[i].vertexCount = 4;
+			m_pPolyArray[i].n = PolyNormal(i);
+			m_pPolyArray[i].mat = 0;
+		}
+
+		m_nNumEdge = 12;
+		m_pEdgeArray = new PAE3D_Edge[m_nNumEdge];
+		PAE3D_Edge e0;
+		e0.v1 = 0;
+		e0.v2 = 1;
+		m_pEdgeArray[0] = e0;
+		PAE3D_Edge e1;
+		e1.v1 = 1;
+		e1.v2 = 2;
+		m_pEdgeArray[1] = e1;
+		PAE3D_Edge e2;
+		e2.v1 = 2;
+		e2.v2 = 3;
+		m_pEdgeArray[2] = e2;
+		PAE3D_Edge e3;
+		e3.v1 = 3;
+		e3.v2 = 0;
+		m_pEdgeArray[3] = e3;
+		PAE3D_Edge e4;
+		e4.v1 = 4;
+		e4.v2 = 5;
+		m_pEdgeArray[4] = e4;
+		PAE3D_Edge e5;
+		e5.v1 = 5;
+		e5.v2 = 6;
+		m_pEdgeArray[5] = e5;
+		PAE3D_Edge e6;
+		e6.v1 = 6;
+		e6.v2 = 7;
+		m_pEdgeArray[6] = e6;
+		PAE3D_Edge e7;
+		e7.v1 = 7;
+		e7.v2 = 4;
+		m_pEdgeArray[7] = e7;
+		PAE3D_Edge e8;
+		e8.v1 = 0;
+		e8.v2 = 4;
+		m_pEdgeArray[8] = e8;
+		PAE3D_Edge e9;
+		e9.v1 = 1;
+		e9.v2 = 5;
+		m_pEdgeArray[9] = e9;
+		PAE3D_Edge e10;
+		e10.v1 = 2;
+		e10.v2 = 6;
+		m_pEdgeArray[10] = e10;
+		PAE3D_Edge e11;
+		e11.v1 = 3;
+		e11.v2 = 7;
+		m_pEdgeArray[11] = e11;
+		AssignIntermediatePointers();
+	}
+	else {
+		ReadOBJ(filename);
+	}
+}
+
+void Model::ReadOBJ(const char *filename) {
+	FILE* fp;
+	char mode, vmode;
+	char str[200];
+	int v1, v2, v3, n1, n2, n3, t1, t2, t3;
+	int numVert, numNorm, numUV, numFace;
+	float x, y, z;
+	float u, v;
+
+	numVert = numNorm = numUV = numFace = 0;
+
+	fp = fopen(filename, "r");
+	if (fp == NULL)
+		printf("Error reading %s file\n", filename);
+	else
+		printf("Reading %s file\n", filename);
+
+	// Check number of vertex, normal, uvCoord, and Face
+	while (fgets(str, 200, fp) != NULL) {
+		sscanf(str, "%c%c", &mode, &vmode);
+		switch (mode) {
+		case 'v': /* vertex, uv, normal */
+			if (vmode == 't') // uv coordinate
+				numUV++;
+			else if (vmode == 'n') // normal
+				numNorm++;
+			else if (vmode == ' ') // vertex
+				numVert++;
+			break;
+		case 'f': /* faces */
+			numFace++;
+			break;
+		}
+	}
+
+	m_nNumPoint = numVert;
+	m_nNumPolygon = numFace;
+	m_nNumEdge = 0;
+
 	m_pVertexArray = new PAE3D_Point[m_nNumPoint];
-	m_pVertexArray[0].x = 0.5;
-	m_pVertexArray[0].y = 0.5;
-	m_pVertexArray[0].z = 0.5;
-	m_pVertexArray[1].x = -0.5;
-	m_pVertexArray[1].y = 0.5;
-	m_pVertexArray[1].z = 0.5;
-	m_pVertexArray[2].x = -0.5;
-	m_pVertexArray[2].y = -0.5;
-	m_pVertexArray[2].z = 0.5;
-	m_pVertexArray[3].x = 0.5;
-	m_pVertexArray[3].y = -0.5;
-	m_pVertexArray[3].z = 0.5;
-	m_pVertexArray[4].x = 0.5;
-	m_pVertexArray[4].y = 0.5;
-	m_pVertexArray[4].z = -0.5;
-	m_pVertexArray[5].x = -0.5;
-	m_pVertexArray[5].y = 0.5;
-	m_pVertexArray[5].z = -0.5;
-	m_pVertexArray[6].x = -0.5;
-	m_pVertexArray[6].y = -0.5;
-	m_pVertexArray[6].z = -0.5;
-	m_pVertexArray[7].x = 0.5;
-	m_pVertexArray[7].y = -0.5;
-	m_pVertexArray[7].z = -0.5;
-
-	m_nNumPolygon = 6;
+	m_pEdgeArray = new PAE3D_Edge[m_nNumPolygon*3];
 	m_pPolyArray = new PAE3D_Polygon[m_nNumPolygon];
 
-	unsigned int* points = new unsigned int[4];
-	points[0] = 0;
-	points[1] = 1;
-	points[2] = 2;
-	points[3] = 3;
-	m_pPolyArray[0].vertices = points;
-	points = new unsigned int[4];
-	points[0] = 7;
-	points[1] = 6;
-	points[2] = 5;
-	points[3] = 4;
-	m_pPolyArray[1].vertices = points;
-	points = new unsigned int[4];
-	points[0] = 1;
-	points[1] = 5;
-	points[2] = 6;
-	points[3] = 2;
-	m_pPolyArray[2].vertices = points;
-	points = new unsigned int[4];
-	points[0] = 4;
-	points[1] = 0;
-	points[2] = 3;
-	points[3] = 7;
-	m_pPolyArray[3].vertices = points;
-	points = new unsigned int[4];
-	points[0] = 4;
-	points[1] = 5;
-	points[2] = 1;
-	points[3] = 0;
-	m_pPolyArray[4].vertices = points;
-	points = new unsigned int[4];
-	points[0] = 3;
-	points[1] = 2;
-	points[2] = 6;
-	points[3] = 7;
-	m_pPolyArray[5].vertices = points;
+	//-----------------------------------------------------------
+	//	Read obj file
+	//-----------------------------------------------------------
+	numVert = numNorm = numUV = numFace = 0;
 
-	for (int i = 0 ; i < m_nNumPoint; i++) {
-		m_pVertexArray[i].edgeCount = 0;
+	fseek(fp, 0L, SEEK_SET);
+	while (fgets(str, 200, fp) != NULL) {
+		sscanf(str, "%c%c", &mode, &vmode);
+		switch (mode) {
+		case 'v': /* vertex, uv, normal */
+			if (vmode == 't') // uv coordinate
+					{
+				sscanf(str, "vt %f %f", &u, &v);
+				//m_pUVArray[numUV].u = u;
+				//m_pUVArray[numUV].v = v;
+				numUV++;
+			} else if (vmode == 'n') // normal
+					{
+				sscanf(str, "vn %f %f %f", &x, &y, &z);
+				/*m_pNormalArray[numNorm].x = x;
+				m_pNormalArray[numNorm].y = y;
+				m_pNormalArray[numNorm].z = z;*/
+				numNorm++;
+			} else if (vmode == ' ') // vertex
+					{
+				sscanf(str, "v %f %f %f", &x, &y, &z);
+				m_pVertexArray[numVert].x = x;
+				m_pVertexArray[numVert].y = y;
+				m_pVertexArray[numVert].z = z;
+				m_pVertexArray[numVert].selected = true;
+				numVert++;
+			}
+			break;
+		case 'f': /* faces : stored value is index - 1 since our index starts from 0, but obj starts from 1 */
+			if (numNorm > 0 && numUV > 0) {
+				sscanf(str, "f %d/%d/%d %d/%d/%d %d/%d/%d", &v1, &t1, &n1, &v2, &t2, &n2, &v3, &t3, &n3);
+			} else if(numNorm > 0 && numUV ==0){
+				sscanf(str, "f %d//%d %d//%d %d//%d", &v1, &n1, &v2, &n2, &v3, &n3);
+			} else if(numUV > 0 && numNorm==0){
+				sscanf(str, "f %d/%d %d/%d %d/%d", &v1, &t1, &v2, &t2, &v3, &t3);
+			} else if(numUV==0 && numNorm==0){
+				sscanf(str, "f %d %d %d", &v1, &v2, &v3);
+			}
+			// Vertex indicies for triangle:
+			if (numVert != 0) {
+				m_pPolyArray[numFace].vertexCount = 3;
+				m_pPolyArray[numFace].edges = new unsigned int[3];
+				m_pPolyArray[numFace].vertices = new unsigned int[3];
+				m_pPolyArray[numFace].mat = 0;
+				m_pPolyArray[numFace].selected = true;
+
+				m_pPolyArray[numFace].vertices[0] = v1 - 1;
+				m_pPolyArray[numFace].vertices[1] = v2 - 1;
+				m_pPolyArray[numFace].vertices[2] = v3 - 1;
+
+				int e1 = FindEdge(v1-1, v2-1);
+				if (e1 == -1) {
+					PAE3D_Edge e;
+					e.v1 = v1-1;
+					e.v2 = v2-1;
+					e.selected = true;
+					e1 = m_nNumEdge;
+					AddEdge(e);
+				}
+				int e2 = FindEdge(v2-1, v3-1);
+				if (e2 == -1) {
+					PAE3D_Edge e;
+					e.v1 = v2-1;
+					e.v2 = v3-1;
+					e.selected = true;
+					e2 = m_nNumEdge;
+					AddEdge(e);
+				}
+				int e3 = FindEdge(v3-1, v1-1);
+				if (e3 == -1) {
+					PAE3D_Edge e;
+					e.v1 = v3-1;
+					e.v2 = v1-1;
+					e.selected = true;
+					e3 = m_nNumEdge;
+					AddEdge(e);
+				}
+				m_pPolyArray[numFace].edges[0] = e1;
+				m_pPolyArray[numFace].edges[1] = e2;
+				m_pPolyArray[numFace].edges[2] = e3;
+			}
+
+			numFace++;
+			break;
+		default:
+			break;
+		}
 	}
+
+	fclose(fp);
+
 	for (int i = 0; i < m_nNumPolygon; i++) {
-		m_pPolyArray[i].selected = false;
-		m_pPolyArray[i].vertexCount = 4;
 		m_pPolyArray[i].n = PolyNormal(i);
-		m_pPolyArray[i].mat = 0;
 	}
 
-	m_nNumEdge = 12;
-	m_pEdgeArray = new PAE3D_Edge[m_nNumEdge];
-	PAE3D_Edge e0;
-	e0.v1 = 0;
-	e0.v2 = 1;
-	m_pEdgeArray[0] = e0;
-	PAE3D_Edge e1;
-	e1.v1 = 1;
-	e1.v2 = 2;
-	m_pEdgeArray[1] = e1;
-	PAE3D_Edge e2;
-	e2.v1 = 2;
-	e2.v2 = 3;
-	m_pEdgeArray[2] = e2;
-	PAE3D_Edge e3;
-	e3.v1 = 3;
-	e3.v2 = 0;
-	m_pEdgeArray[3] = e3;
-	PAE3D_Edge e4;
-	e4.v1 = 4;
-	e4.v2 = 5;
-	m_pEdgeArray[4] = e4;
-	PAE3D_Edge e5;
-	e5.v1 = 5;
-	e5.v2 = 6;
-	m_pEdgeArray[5] = e5;
-	PAE3D_Edge e6;
-	e6.v1 = 6;
-	e6.v2 = 7;
-	m_pEdgeArray[6] = e6;
-	PAE3D_Edge e7;
-	e7.v1 = 7;
-	e7.v2 = 4;
-	m_pEdgeArray[7] = e7;
-	PAE3D_Edge e8;
-	e8.v1 = 0;
-	e8.v2 = 4;
-	m_pEdgeArray[8] = e8;
-	PAE3D_Edge e9;
-	e9.v1 = 1;
-	e9.v2 = 5;
-	m_pEdgeArray[9] = e9;
-	PAE3D_Edge e10;
-	e10.v1 = 2;
-	e10.v2 = 6;
-	m_pEdgeArray[10] = e10;
-	PAE3D_Edge e11;
-	e11.v1 = 3;
-	e11.v2 = 7;
-	m_pEdgeArray[11] = e11;
+	/*for (int i = 0; i < m_nNumPoint; i++) {
+		printf("%d\n", i);
+		CalculateNormal(i);
+	}*/
 
+	PAE3D_Edge* temp = new PAE3D_Edge[m_nNumEdge];
+	for (int i = 0; i < m_nNumEdge; i++) {
+		temp[i] = m_pEdgeArray[i];
+	}
+	delete(m_pEdgeArray);
+	m_pEdgeArray = temp;
 	AssignIntermediatePointers();
+	for (int i = 0; i < m_nNumPoint; i++) {
+		CalculateNormal(i);
+	}
+	printf("Reading OBJ file is DONE.\n");
+
 }
 
 void Model::AssignIntermediatePointers() {
@@ -711,11 +877,12 @@ void Model::RenderVertices(float zoom) {
 		else {
 			glColor3f(0, 0, 0);
 		}
-		glPushMatrix();
 		PAE3D_Point p = m_pVertexArray[i];
+		glPushMatrix();
 		glTranslatef(p.x, p.y, p.z);
 		glutSolidSphere(radius/height * zoom, 4, 4);
 		glPopMatrix();
+
 	}
 }
 
@@ -738,6 +905,7 @@ void Model::RenderEdges(float zoom) {
 		PAE3D_Edge edge = m_pEdgeArray[i];
 		PAE3D_Point p1 = m_pVertexArray[edge.v1];
 		PAE3D_Point p2 = m_pVertexArray[edge.v2];
+		if(picking){
 		if (p1.z < p2.z) {
 			PAE3D_Point tempP = p1;
 			p1 = p2;
@@ -771,6 +939,14 @@ void Model::RenderEdges(float zoom) {
 		glRotatef(angle, t.x, t.y, t.z);
 		gluCylinder(quadric, 0.5 / height * zoom, 0.5 / height * zoom, length, 4, 1);
 		glPopMatrix();
+		}
+		else {
+			glLineWidth(2);
+			glBegin(GL_LINES);
+			glVertex3f(p1.x, p1.y, p1.z);
+			glVertex3f(p2.x, p2.y, p2.z);
+			glEnd();
+		}
 	}
 }
 
@@ -837,6 +1013,7 @@ void Model::RenderFaces(Color* cols, bool phong) {
 		for(int j = 0 ; j < poly.vertexCount; j++) {
 			PAE3D_Point p = m_pVertexArray[poly.vertices[j]];
 			if (phong) {
+
 				glNormal3f(p.n.x, p.n.y, p.n.z);
 			}
 			glVertex3f(p.x, p.y, p.z);

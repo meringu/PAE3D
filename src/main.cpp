@@ -60,11 +60,26 @@ void PAE3D_MouseClick(int button, int state, int x, int y);
 void PAE3D_MouseMove(int x, int y);
 void PAE3D_KeyboardDown(unsigned char, int, int);
 void PAE3D_KeyboardUp(unsigned char, int, int);
-void PAE3D_LeftCLickColor();
 void PAE3D_RepostMain();
 void PAE3D_ButtonPushed(int);
 
 int main(int argc, char** argv) {
+	const char* usage = "Usage: PAE3D [option]\n\nOption\t\tMeaning\n --help\t\tShow this message\n -o <file>\tLoad .obj file\n\t\tLoad default cube\n";
+	char* file = NULL;
+	if (argc > 1) {
+		if (argc != 3) {
+			printf(usage);
+			exit(0);
+		}
+		if (strcmp(argv[1], "-o") == 0) {
+			file = argv[2];
+		}
+		else {
+			printf(usage);
+			exit(0);
+		}
+	}
+
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 
 	glutInit(&argc, argv);
@@ -78,7 +93,7 @@ int main(int argc, char** argv) {
     skyBoxZp = openTexture("cubemapzp.jpg");
     skyBoxZn = openTexture("cubemapzn.jpg");
     openCubeMap("cubemapxp.jpg", "cubemapxn.jpg", "cubemapyp.jpg", "cubemapyn.jpg", "cubemapzp.jpg", "cubemapzn.jpg");
-    g_model = new Model();
+    g_model = new Model(file);
     glClearColor(0.5, 0.5, 0.5, 1);
     glutDisplayFunc(PAE3D_Display);
     glutReshapeFunc(PAE3D_Reshape);

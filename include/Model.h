@@ -29,7 +29,7 @@ private:
 	bool picking;
 public:
 	int SelectedHandle;
-	Model(void);
+	Model(char*);
 	~Model(void);
 	PAE3D_Normal PolyNormal(int);
 	PAE3D_Point PolyCenter(int);
@@ -61,4 +61,5 @@ public:
 	void AssignIntermediatePointers();
 	void Subdivide();
 	void ResetHandlePosition();
+	void ReadOBJ(const char*);
 };

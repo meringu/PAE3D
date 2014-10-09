@@ -1,8 +1,8 @@
 #pragma once
 
 // Default Window
-#define PAE3D_WIN_WIDTH	640
-#define PAE3D_WIN_HEIGHT 480
+#define PAE3D_WIN_WIDTH	1000
+#define PAE3D_WIN_HEIGHT 700
 
 // Projection parameters
 #define PAE3D_FOVY		20.0
