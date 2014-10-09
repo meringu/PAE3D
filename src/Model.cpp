@@ -792,16 +792,45 @@ void Model::RenderFaces(Color* cols, bool phong) {
 			glColor4f(mat->col.r, mat->col.g, mat->col.b, mat->col.a);
 		}
 		if (phong) {
+			// cube mapping
 			/*glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-			glTexGeni(GLglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-			glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-			glBindTexture(GL_TEXTURE_2D, cubeMap);*/
-			glEnable(GL_TEXTURE_CUBE_MAP);
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);//_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+			glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);*/
+			//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			//glBindTexture(GL_TEXTURE_2D, cubeMap);
+			/*glEnable(GL_TEXTURE_CUBE_MAP);
 			glEnable(GL_TEXTURE_GEN_S);
 			glEnable(GL_TEXTURE_GEN_T);
-			glEnable(GL_TEXTURE_GEN_R);
+			glEnable(GL_TEXTURE_GEN_R);*/
+
+			GLfloat* ambient = new GLfloat[4];
+			ambient[0] = cols->GetMaterial(m_pPolyArray[i].mat)->col.r*0.2;
+			ambient[1] = cols->GetMaterial(m_pPolyArray[i].mat)->col.g*0.2;
+			ambient[2] = cols->GetMaterial(m_pPolyArray[i].mat)->col.b*0.2;
+			ambient[3] = 1.0;
+			GLfloat* diffuse = new GLfloat[4];
+			diffuse[0] = cols->GetMaterial(m_pPolyArray[i].mat)->col.r*0.8;
+			diffuse[1] = cols->GetMaterial(m_pPolyArray[i].mat)->col.g*0.8;
+			diffuse[2] = cols->GetMaterial(m_pPolyArray[i].mat)->col.b*0.8;
+			diffuse[3] = 1.0;
+			GLfloat* specular = new GLfloat[4];
+			specular[0] = cols->GetMaterial(m_pPolyArray[i].mat)->specular;
+			specular[1] = cols->GetMaterial(m_pPolyArray[i].mat)->specular;
+			specular[2] = cols->GetMaterial(m_pPolyArray[i].mat)->specular;
+			specular[3] = 1;
+			float shininess = cols->GetMaterial(m_pPolyArray[i].mat)->shininess +1;
+
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 		} else {
+			GLfloat* specular = new GLfloat[4];
+			specular[0] = 0;
+			specular[1] = 0;
+			specular[2] = 0;
+			specular[3] = 1;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 			glNormal3f(poly.n.x, poly.n.y, poly.n.z);
 		}
 		glBegin(GL_POLYGON);

@@ -7,15 +7,16 @@ LIBS= -lGL -lglut -lGLU -ljpeg -lpng16 -lm
 BUILD = build/
 SRC = src/
 
-all: $(BUILD)Pro1
+all: $(BUILD)PAE3D
 
-$(BUILD)Pro1: $(BUILD)main.o $(BUILD)Model.o $(BUILD)Color.o $(BUILD)Handle.o $(BUILD)ImageLoader.o $(BUILD)Toolbar.o
+$(BUILD)PAE3D: $(BUILD)main.o $(BUILD)Model.o $(BUILD)Color.o $(BUILD)Handle.o $(BUILD)ImageLoader.o $(BUILD)Toolbar.o
 	$(CC) -o $@ $^ $(LPATH) $(LDPATH) $(LIBS)
+	$(RM) $(BUILD)*.o
 	
 $(BUILD)%.o: $(SRC)%.cpp
 	$(CC) $(CFLAGS) -c -o $@ $^ $(IPATH)
 
 clean:
-	$(RM) -f $(BUILD)*.o $(BUILD)*.gch $(BUILD)Pro1
+	$(RM) -f $(BUILD)*.o $(BUILD)PAE3D
 
 

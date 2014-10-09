@@ -66,7 +66,7 @@ void PAE3D_ButtonPushed(int);
 
 int main(int argc, char** argv) {
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
-	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
+
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(g_nWinWidth, g_nWinHeight);
@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
     PAE3D_SetLights();
 	PAE3D_SetCamera();
 
-    g_toolbar = new Toolbar(PAE3D_ButtonPushed);
-    g_toolbar->Open(g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
+	g_color = new Color(PAE3D_RepostMain, g_mainWnd, g_nWinHeight, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
+    g_toolbar = new Toolbar(PAE3D_ButtonPushed, g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
 
 	glutMainLoop();
     return 0;
@@ -100,12 +100,15 @@ void PAE3D_ButtonPushed (int button) {
 	switch(button) {
 		case 1:
 			g_model->SetSelectType(PAE3D_SELECT_FACES);
+			leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 			break;
 		case 2:
 			g_model->SetSelectType(PAE3D_SELECT_EDGES);
+			leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 			break;
 		case 3:
 			g_model->SetSelectType(PAE3D_SELECT_VERTICES);
+			leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 			break;
 		case 4:
 			handleMode = PAE3D_HANLE_MOVE;
@@ -117,25 +120,13 @@ void PAE3D_ButtonPushed (int button) {
 			g_model->Extrude();
 			break;
 		case 7:
-			if(!subToggle){
-				subToggle = true;
-				g_color->Open(g_mainWnd);
-			}
-			else{
-				if(!g_color->IsVisable()) {
-					g_color->Open(g_mainWnd);
-				}
-				subToggle = false;
-			}
-			break;
-		case 8:
 			displayMode++;
 			displayMode%=2;
 			break;
-		case 9:
+		case 8:
 			g_model->Subdivide();
 			break;
-		case 10:
+		case 9:
 			g_model->Smooth();
 			break;
 	}
@@ -150,34 +141,12 @@ void PAE3D_RepostMain() {
 	glutPostRedisplay();
 }
 
-void PAE3D_LeftCLickColor() {
-	leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
-}
-
 void PAE3D_Display() {
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_DEPTH_TEST);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
 	glShadeModel(GL_SMOOTH);
-
-	//int num = g_toolbar->getCurrentButton();
-	/*
-	if(num>0){
-		if(prev != num){
-			//printf(" oper %i \n", num);
-			if(num == 1){
-				g_model->Extrude();
-			}
-			prev  = num;
-		}
-		g_toolbar->stop();
-		}
-	if(num==0){
-		prev  = num;
-	}*/
 
 	switch (mode) {
 	case PAE3D_RENDER:
@@ -327,13 +296,13 @@ void PAE3D_Reshape(int w, int h) {
 		g_nWinHeight = h;
 	}else{	g_nWinHeight = PAE3D_WIN_HEIGHT;}
 
-	if(!subToggle){
+	/*if(!subToggle){
 		g_color->Close();
-	}
+	}*/
 	glutReshapeWindow(g_nWinWidth,g_nWinHeight);
 	glViewport(0, 0, g_nWinWidth, g_nWinHeight);
     PAE3D_SetCamera();
-
+    g_color->Resize(w, h);
     glutPostRedisplay();
 }
 
@@ -350,12 +319,15 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'f':
 		g_model->SetSelectType(PAE3D_SELECT_FACES);
+		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
 	case 'v':
 		g_model->SetSelectType(PAE3D_SELECT_VERTICES);
+		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
 	case 'e':
 		g_model->SetSelectType(PAE3D_SELECT_EDGES);
+		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
 	case 'm':
 		handleMode = PAE3D_HANLE_MOVE;
@@ -366,16 +338,6 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	case 'x':
 		g_model->Extrude();
 		break;
-	case 'c':
-		if(!subToggle){
-		subToggle = true;
-		g_color->Open(g_mainWnd);}
-		else{
-		if(!g_color->IsVisable()){
-			g_color->Open(g_mainWnd);
-		}
-		subToggle = false;}
-		break;
 	case 'p':
 		displayMode++;
 		displayMode%=2;
@@ -383,7 +345,11 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	case 'd':
 		g_model->Subdivide();
 		break;
+	case 'c':
+		leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+		break;
 	}
+
 	glutPostRedisplay();
 }
 

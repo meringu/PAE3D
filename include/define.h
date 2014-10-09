@@ -71,4 +71,6 @@ struct PAE3D_RGBA {
 
 struct PAE3D_Material {
 	PAE3D_RGBA col;
+	float specular;
+	float shininess;
 };

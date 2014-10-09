@@ -27,16 +27,9 @@ GLuint buttonSelectFaces;
 GLuint buttonSelectEdges;
 GLuint buttonSelectPoints;
 
-Toolbar::Toolbar(void (*i)(int)) {
+Toolbar::Toolbar(void (*i)(int), unsigned int mainWin, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
 	startId = i;
 	currentButton = 0;
-}
-
-Toolbar::~Toolbar() {
-
-}
-
-void Toolbar::Open(unsigned int mainWin, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	barToMainWind = mainWin;
 	barWind = glutCreateSubWindow(mainWin,0,0,32*buttonCount,32);
@@ -50,13 +43,11 @@ void Toolbar::Open(unsigned int mainWin, void (*d) (unsigned char, int,int), voi
 	glutKeyboardFunc(d);
 	glutKeyboardUpFunc(u);
 	glClearColor(1, 1, 1, 1);
-	glutMainLoop();
 }
 
-void Toolbar::Close(){
-	glutDestroyWindow(barWind);
-}
+Toolbar::~Toolbar() {
 
+}
 
 void BarClick(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {

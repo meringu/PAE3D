@@ -6,11 +6,9 @@
 
 class Color {
 public:
-	Color(void (*p)(void), void (*r)(void));
+	Color(void (*r)(void), unsigned int, unsigned int, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int));
 	~Color(void);
-	void Open(unsigned int);
-	void Close();
 	PAE3D_Material* GetMaterial(int);
+	void Resize(int width, int height);
 	int GetCurrentMaterial();
-	bool IsVisable();
 };

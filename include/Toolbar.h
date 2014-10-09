@@ -6,13 +6,9 @@
 
 class Toolbar {
 public:
-	Toolbar(void (*i)(int));
+	Toolbar(void (*i)(int), unsigned int, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int));
 	~Toolbar(void);
-	void Open(unsigned int, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int));
-	void Close();
-	void CallReshape(int);
 	void DrawButtons(bool);
 	int getCurrentButton();
 	void stop();
-
 };
