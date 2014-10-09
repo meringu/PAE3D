@@ -35,7 +35,8 @@ bool m_ctrlDownNow = false, m_shiftDownNow = false;
 bool m_ctrlDownLastMiddleClick = false, m_shiftDownLastMiddleClick = false;
 PAE3D_Point g_center;
 Color* g_color;
-GLuint skyBox;
+
+
 
 void PAE3D_DisplayMode(int);
 void PAE3D_Display();
@@ -52,13 +53,19 @@ void PAE3D_LeftCLickColor();
 void PAE3D_RepostMain();
 
 int main(int argc, char** argv) {
-	skyBox = openTexture("cubemap.jpg");
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(g_nWinWidth, g_nWinHeight);
     g_mainWnd = glutCreateWindow("PAE3D");
+    skyBoxXp = openTexture("cubemapxp.jpg");
+    skyBoxXn = openTexture("cubemapxn.jpg");
+    skyBoxYp = openTexture("cubemapyp.jpg");
+    skyBoxYn = openTexture("cubemapyn.jpg");
+    skyBoxZp = openTexture("cubemapzp.jpg");
+    skyBoxZn = openTexture("cubemapzn.jpg");
+    cubeMap = openCubeMap("cubemapxp.jpg", "cubemapxn.jpg", "cubemapyp.jpg", "cubemapyn.jpg", "cubemapzp.jpg", "cubemapzn.jpg");
     g_model = new Model();
     glClearColor(0.5, 0.5, 0.5, 1);
     glutDisplayFunc(PAE3D_Display);
@@ -69,6 +76,7 @@ int main(int argc, char** argv) {
     glutKeyboardUpFunc(PAE3D_KeyboardUp);
     PAE3D_SetLights();
 	PAE3D_SetCamera();
+
 	glutMainLoop();
     return 0;
 }
@@ -88,10 +96,10 @@ void PAE3D_LeftCLickColor() {
 
 void PAE3D_Display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_DEPTH_TEST);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glShadeModel(GL_SMOOTH);
+	glShadeModel(GLU_SMOOTH);
 	switch (mode) {
 	case PAE3D_RENDER:
 		switch (displayMode) {
@@ -105,26 +113,96 @@ void PAE3D_Display() {
 			g_model->RenderFaces(g_color, false);
 			break;
 		case PAE3D_PHONG_MODE:
-			glDisable(GL_LIGHTING);
-			glEnable(GL_COLOR_MATERIAL);
 			glEnable(GL_TEXTURE_2D);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glBindTexture(GL_TEXTURE_2D, skyBox);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			float oldZoom = zoom;
+			zoom = 1;
+			PAE3D_Point oldCenter = g_center;
+			g_center.x = 0;
+			g_center.y = 0;
+			g_center.z = 0;
+			float c = 0.001; // move faces closer by a 10th of a pixel to remove artifacts at seams
+			PAE3D_SetCamera();
 
+			glBindTexture(GL_TEXTURE_2D, skyBoxXp);
 			glBegin(GL_QUADS);
-			glColor3f(1, 1, 1);
 			glTexCoord2f(0, 0);
-			glVertex3f(10, 10, -10);
-			glTexCoord2f(1, 0);
-			glVertex3f(-10, 10, -10);
-			glTexCoord2f(1, 1);
-			glVertex3f(-10, -10, -10);
+			glVertex3f(1-c, -1, -1);
 			glTexCoord2f(0, 1);
-			glVertex3f(10, -10, -10);
+			glVertex3f(1-c, 1, -1);
+			glTexCoord2f(1, 1);
+			glVertex3f(1-c, 1, 1);
+			glTexCoord2f(1, 0);
+			glVertex3f(1-c, -1, 1);
 			glEnd();
+
+			glBindTexture(GL_TEXTURE_2D, skyBoxXn);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex3f(c-1, -1, 1);
+			glTexCoord2f(0, 1);
+			glVertex3f(c-1, 1, 1);
+			glTexCoord2f(1, 1);
+			glVertex3f(c-1, 1, -1);
+			glTexCoord2f(1, 0);
+			glVertex3f(c-1, -1, -1);
+			glEnd();
+
+			glBindTexture(GL_TEXTURE_2D, skyBoxZp);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex3f(1, -1, 1-c);
+			glTexCoord2f(0, 1);
+			glVertex3f(1, 1, 1-c);
+			glTexCoord2f(1, 1);
+			glVertex3f(-1, 1, 1-c);
+			glTexCoord2f(1, 0);
+			glVertex3f(-1, -1, 1-c);
+			glEnd();
+
+			glBindTexture(GL_TEXTURE_2D, skyBoxZn);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex3f(-1, -1, c-1);
+			glTexCoord2f(0, 1);
+			glVertex3f(-1, 1, c-1);
+			glTexCoord2f(1, 1);
+			glVertex3f(1, 1, c-1);
+			glTexCoord2f(1, 0);
+			glVertex3f(1, -1, c-1);
+			glEnd();
+
+			glBindTexture(GL_TEXTURE_2D, skyBoxYp);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex3f(1, 1-c, 1);
+			glTexCoord2f(0, 1);
+			glVertex3f(1, 1-c, -1);
+			glTexCoord2f(1, 1);
+			glVertex3f(-1, 1-c, -1);
+			glTexCoord2f(1, 0);
+			glVertex3f(-1, 1-c, 1);
+			glEnd();
+
+			glBindTexture(GL_TEXTURE_2D, skyBoxYn);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex3f(1, c-1, -1);
+			glTexCoord2f(0, 1);
+			glVertex3f(1, c-1, 1);
+			glTexCoord2f(1, 1);
+			glVertex3f(-1, c-1, 1);
+			glTexCoord2f(1, 0);
+			glVertex3f(-1, c-1, -1);
+			glEnd();
+
+			zoom = oldZoom;
+			g_center = oldCenter;
+			PAE3D_SetCamera();
 			glDisable(GL_TEXTURE_2D);
-			glEnable(GL_COLOR_MATERIAL);
 			glEnable(GL_LIGHTING);
+			glClear(GL_DEPTH_BUFFER_BIT);
 			g_model->RenderFaces(g_color, true);
 			break;
 		}

@@ -10,9 +10,13 @@ GLuint openTexture(const char* filename) {
 			break;
 		}
 	}
-	char* ncs = const_cast<char*>(filename);
+	char* ncs = new char[i+5];
+	unsigned int j = 0;
+	do {
+		ncs[j] = filename[j];
+		j++;
+	} while (filename[j] != '\0');
 	char extension[5];
-	printf("'%s'\n", ncs);
 	strcpy(extension, &filename[i + 1]);
 	if (strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0)
 		loadTextureFromJPEG(ncs, &t);
@@ -30,6 +34,7 @@ GLuint openTexture(const char* filename) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	if (t.hasAlpha) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t.width, t.height, 0, GL_RGBA,
 				GL_UNSIGNED_BYTE, t.textureData);
@@ -38,6 +43,81 @@ GLuint openTexture(const char* filename) {
 				GL_UNSIGNED_BYTE, t.textureData);
 	}
 	free(t.textureData);
+	delete(ncs);
+	return texName;
+}
+
+TextureInfo openTextureInfo(const char* filename) {
+	TextureInfo t;
+	unsigned int i;
+	for (i = 0; i < strlen(filename); i++) {
+		if (filename[i] == '.') {
+			break;
+		}
+	}
+	char* ncs = new char[i+5];
+	unsigned int j = 0;
+	do {
+		ncs[j] = filename[j];
+		j++;
+	} while (filename[j] != '\0');
+	char extension[5];
+	strcpy(extension, &filename[i + 1]);
+	if (strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0)
+		loadTextureFromJPEG(ncs, &t);
+	else if (strcmp(extension, "png") == 0)
+		loadTextureFromPNG(ncs, &t);
+	else {
+		printf("Invalid format. Only supports JPEG and PNG.\n");
+		exit(1);
+	}
+	delete(ncs);
+	return t;
+}
+
+GLuint openCubeMap(const char* xp, const char* xn, const char* yp, const char* yn, const char* zp, const char* zn) {
+	GLuint texName;
+	TextureInfo xpt = openTextureInfo(xp);
+	TextureInfo xnt = openTextureInfo(xn);
+	TextureInfo ypt = openTextureInfo(yp);
+	TextureInfo ynt = openTextureInfo(yn);
+	TextureInfo zpt = openTextureInfo(zp);
+	TextureInfo znt = openTextureInfo(zn);
+
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glGenTextures(1, &texName);
+
+	//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texName);
+
+	//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+	//glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	GLuint rgbType = xpt.hasAlpha ? GL_RGBA : GL_RGB;
+
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, rgbType, xpt.width, xpt.height, 0, rgbType,	GL_UNSIGNED_BYTE, xpt.textureData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, rgbType, xnt.width, xnt.height, 0, rgbType,	GL_UNSIGNED_BYTE, xnt.textureData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, rgbType, ypt.width, ypt.height, 0, rgbType,	GL_UNSIGNED_BYTE, ypt.textureData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, rgbType, ynt.width, ynt.height, 0, rgbType,	GL_UNSIGNED_BYTE, ynt.textureData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, rgbType, zpt.width, zpt.height, 0, rgbType,	GL_UNSIGNED_BYTE, zpt.textureData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, rgbType, znt.width, znt.height, 0, rgbType,	GL_UNSIGNED_BYTE, znt.textureData);
+
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+
+	free(xpt.textureData);
+	free(xnt.textureData);
+	free(ypt.textureData);
+	free(ynt.textureData);
+	free(zpt.textureData);
+	free(znt.textureData);
+
 	return texName;
 }
 

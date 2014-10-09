@@ -60,11 +60,6 @@ public:
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
 	void Subdivide();
-	void Subdivide(int);
 	unsigned int FindEdgeUsingDependancies(unsigned int, unsigned  int);
 	void ResetHandlePosition();
-
-	//debug
-	void PAE3D_PrintPoly (PAE3D_Polygon p);
-	void PAE3D_PrintEdge(PAE3D_Edge e);
 };
