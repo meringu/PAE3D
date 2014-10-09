@@ -240,7 +240,7 @@ PAE3D_Normal Model::PolyNormal(int p) {
 	normal.y = 0;
 	normal.z = 0;
 	for (int i = 0; i < poly.vertexCount; i++) {
-		int p1 = poly.vertices[i];
+		/*int p1 = poly.vertices[i];
 		int p2 = poly.vertices[(i+1)%poly.vertexCount];
 		int p3 = poly.vertices[(i+2)%poly.vertexCount];
 		PAE3D_Normal u;
@@ -261,8 +261,22 @@ PAE3D_Normal Model::PolyNormal(int p) {
 		n.z /= m;
 		normal.x += n.x;
 		normal.y += n.y;
+		normal.z += n.z;*/
+		PAE3D_Point p1 = m_pVertexArray[poly.vertices[i]];
+		PAE3D_Point p2 = m_pVertexArray[poly.vertices[(i+1)%poly.vertexCount]];
+		PAE3D_Normal n;
+		n.x = p1.y * p2.z - p1.z * p2.y;
+		n.y = p1.z * p2.x - p1.x * p2.z;
+		n.z = p1.x * p2.y - p1.y * p2.x;
+		float m = sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
+		n.x /= m;
+		n.y /= m;
+		n.z /= m;
+		normal.x += n.x;
+		normal.y += n.y;
 		normal.z += n.z;
 	}
+	printf("\n");
 	float m = sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
 	normal.x /= m;
 	normal.y /= m;
@@ -526,6 +540,7 @@ void Model::Subdivide() {
 				e.v2 = m_pEdgeArray[m_pPolyArray[i].edges[j]].c;
 				e.hasPoly1 = false;
 				e.hasPoly2 = false;
+				e.selected = true;
 				AddEdge(e);
 			}
 		}
@@ -561,7 +576,6 @@ void Model::Subdivide() {
 				m_pPolyArray[other].edges = new unsigned int[m_pPolyArray[other].vertexCount];
 				int copied = 0;
 				for (int j = 0; j < m_pPolyArray[other].vertexCount - 1; j++) {
-					printf("%d\n", j);
 					m_pPolyArray[other].vertices[j+copied] = oldVerts[j];
 					if (-1 == FindEdge(oldVerts[j], oldVerts[(j+1)%(m_pPolyArray[other].vertexCount-1)])) {
 						m_pPolyArray[other].edges[j+copied] = FindEdge(oldVerts[j], c);
@@ -572,11 +586,9 @@ void Model::Subdivide() {
 						m_pPolyArray[other].edges[j+copied] = oldEdges[j];
 					}
 				}
-				printf("done\n");
 			}
 		}
 	}
-	printf("done2\n");
 	// creating new faces
 	for (unsigned int i = 0; i < polys; i++) {
 		if (m_pPolyArray[i].selected) {
