@@ -240,43 +240,30 @@ PAE3D_Normal Model::PolyNormal(int p) {
 	normal.y = 0;
 	normal.z = 0;
 	for (int i = 0; i < poly.vertexCount; i++) {
-		/*int p1 = poly.vertices[i];
-		int p2 = poly.vertices[(i+1)%poly.vertexCount];
-		int p3 = poly.vertices[(i+2)%poly.vertexCount];
-		PAE3D_Normal u;
-		u.x = m_pVertexArray[p2].x - m_pVertexArray[p1].x;
-		u.y = m_pVertexArray[p2].y - m_pVertexArray[p1].y;
-		u.z = m_pVertexArray[p2].z - m_pVertexArray[p1].z;
-		PAE3D_Normal v;
-		v.x = m_pVertexArray[p3].x - m_pVertexArray[p1].x;
-		v.y = m_pVertexArray[p3].y - m_pVertexArray[p1].y;
-		v.z = m_pVertexArray[p3].z - m_pVertexArray[p1].z;
-		PAE3D_Normal n;
-		n.x = u.y * v.z - u.z * v.y;
-		n.y = u.z * v.x - u.x * v.z;
-		n.z = u.x * v.y - u.y * v.x;
-		float m = sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-		n.x /= m;
-		n.y /= m;
-		n.z /= m;
-		normal.x += n.x;
-		normal.y += n.y;
-		normal.z += n.z;*/
 		PAE3D_Point p1 = m_pVertexArray[poly.vertices[i]];
 		PAE3D_Point p2 = m_pVertexArray[poly.vertices[(i+1)%poly.vertexCount]];
+		PAE3D_Point p3 = m_pVertexArray[poly.vertices[(i+2)%poly.vertexCount]];
+		PAE3D_Point v, u;
+		v.x = p2.x - p1.x;
+		v.y = p2.y - p1.y;
+		v.z = p2.z - p1.z;
+		u.x = p3.x - p1.x;
+		u.y = p3.y - p1.y;
+		u.z = p3.z - p1.z;
 		PAE3D_Normal n;
-		n.x = p1.y * p2.z - p1.z * p2.y;
-		n.y = p1.z * p2.x - p1.x * p2.z;
-		n.z = p1.x * p2.y - p1.y * p2.x;
+		n.x = v.y * u.z - v.z * u.y;
+		n.y = v.z * u.x - v.x * u.z;
+		n.z = v.x * u.y - v.y * u.x;
 		float m = sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-		n.x /= m;
-		n.y /= m;
-		n.z /= m;
-		normal.x += n.x;
-		normal.y += n.y;
-		normal.z += n.z;
+		if (m > 0) {
+			n.x /= m;
+			n.y /= m;
+			n.z /= m;
+			normal.x += n.x;
+			normal.y += n.y;
+			normal.z += n.z;
+		}
 	}
-	printf("\n");
 	float m = sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
 	normal.x /= m;
 	normal.y /= m;

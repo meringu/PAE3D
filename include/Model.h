@@ -12,7 +12,7 @@
 #define PAE3D_SELECT_Y_HANDLE 1
 #define PAE3D_SELECT_Z_HANDLE 2
 #define PAE3D_COLORPADDING 3
-#define PAE3D_RENDER_NORMALS false
+#define PAE3D_RENDER_NORMALS true
 
 class Model
 {

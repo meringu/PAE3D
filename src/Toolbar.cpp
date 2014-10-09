@@ -38,7 +38,7 @@ Toolbar::~Toolbar() {
 
 }
 
-void Toolbar::Open(unsigned int mainWin, int width) {
+void Toolbar::Open(unsigned int mainWin, int width, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	barToMainWind = mainWin;
 	barWind = glutCreateSubWindow(mainWin,0,0,32*buttonCount,32);
@@ -51,6 +51,8 @@ void Toolbar::Open(unsigned int mainWin, int width) {
 	glutReshapeFunc(BarReshape);
 	glutMouseFunc(BarClick);
 	glutMotionFunc(BarMove);
+	glutKeyboardFunc(d);
+	glutKeyboardUpFunc(u);
 	glClearColor(1, 1, 1, 1);
 	glutMainLoop();
 }

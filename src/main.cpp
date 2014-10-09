@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 	PAE3D_SetCamera();
 
     g_toolbar = new Toolbar(PAE3D_ButtonPushed);
-    g_toolbar->Open(g_mainWnd,g_nWinWidth);
+    g_toolbar->Open(g_mainWnd,g_nWinWidth, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
 
 	glutMainLoop();
     return 0;
@@ -115,13 +115,15 @@ void PAE3D_ButtonPushed (int button) {
 			break;
 		case 7:
 			if(!subToggle){
-			subToggle = true;
-			g_color->Open(g_mainWnd);}
-			else{
-			if(!g_color->IsVisable()){
+				subToggle = true;
 				g_color->Open(g_mainWnd);
 			}
-			subToggle = false;}
+			else{
+				if(!g_color->IsVisable()) {
+					g_color->Open(g_mainWnd);
+				}
+				subToggle = false;
+			}
 			break;
 		case 8:
 			displayMode++;
