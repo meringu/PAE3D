@@ -24,13 +24,10 @@ typedef struct texInfo {
 	bool hasAlpha;
 } TextureInfo;
 
-static GLuint skyBoxXp;
-static GLuint skyBoxXn;
-static GLuint skyBoxYp;
-static GLuint skyBoxYn;
-static GLuint skyBoxZp;
-static GLuint skyBoxZn;
-static GLuint cubeMap;
+
+
+//static GLuint cubeMap;
+
 
 int loadTextureFromJPEG(char*,TextureInfo*);
 int loadTextureFromPNG(char*, TextureInfo*);

@@ -8,7 +8,7 @@ class Toolbar {
 public:
 	Toolbar(void (*i)(int));
 	~Toolbar(void);
-	void Open(unsigned int,int, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int));
+	void Open(unsigned int, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int));
 	void Close();
 	void CallReshape(int);
 	void DrawButtons(bool);

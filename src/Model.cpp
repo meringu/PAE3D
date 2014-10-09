@@ -492,7 +492,6 @@ void Model::Smooth() {
 
 void Model::Subdivide() {
 	// make face points
-	unsigned int points = m_nNumPoint;
 	unsigned int edges = m_nNumEdge;
 	unsigned int polys = m_nNumPolygon;
 	// finding face points
@@ -549,7 +548,6 @@ void Model::Subdivide() {
 			e.hasPoly2 = false;
 			e.selected = true;
 			int c = m_pEdgeArray[i].c;
-			int en = m_nNumPoint;
 			AddEdge(e);
 			m_pEdgeArray[i].v2 = m_pEdgeArray[i].c;
 			m_pEdgeArray[i].hasPoly1 = false;
@@ -685,16 +683,7 @@ void Model::CalculateNormal(int id) {
 	m_pVertexArray[id].n = n;
 }
 
-unsigned int Model::FindEdgeUsingDependancies(unsigned int v1, unsigned  int v2) {
-	for (int i = 0; i < m_pVertexArray[v1].edgeCount; i++) {
-		if (m_pEdgeArray[m_pVertexArray[v1].edges[i]].v1 == v2 || m_pEdgeArray[m_pVertexArray[v1].edges[i]].v1 == v2) {
-			return m_pVertexArray[v1].edges[i];
-		}
-	}
-	return -1;
-}
-
-unsigned int Model::FindEdge(unsigned int v1, unsigned  int v2) {
+int Model::FindEdge(unsigned int v1, unsigned  int v2) {
 	for (int i = 0; i < m_nNumEdge; i++) {
 		if ((m_pEdgeArray[i].v1 == v1 && m_pEdgeArray[i].v2 == v2)
 				|| (m_pEdgeArray[i].v2 == v1 && m_pEdgeArray[i].v1 == v2)) {
@@ -1233,7 +1222,7 @@ void Model::Extrude(){
 	}
 
 
-	for (int i = 0; i < m_nNumPoint; i++) {
+	for (unsigned int i = 0; i < (unsigned int)m_nNumPoint; i++) {
 		if (m_pVertexArray[i].selected) {
 			bool outer = false;
 			for (int k = 0; k < outerEdgeCount; k++) {
@@ -1254,7 +1243,7 @@ void Model::Extrude(){
 	unsigned int* innerVertsInd = new unsigned int[innerVertCount];
 	outerPosition = 0; innerPosition = 0;
 
-	for (int i = 0; i < m_nNumPoint; i++) {
+	for (unsigned int i = 0; i < (unsigned int)m_nNumPoint; i++) {
 		if (m_pVertexArray[i].selected) {
 			bool outer = false;
 			for (int k = 0; k < outerEdgeCount; k++) {

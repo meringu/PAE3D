@@ -8,8 +8,6 @@ using namespace std;
 
 void BarDisplay(void);
 void BarClick(int, int, int, int);
-void BarMove(int, int);
-void BarReshape(int,int);
 void BarSetCamera(void);
 void DrawButtons(bool);
 void ProcessButton(int x, int y);
@@ -38,7 +36,7 @@ Toolbar::~Toolbar() {
 
 }
 
-void Toolbar::Open(unsigned int mainWin, int width, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
+void Toolbar::Open(unsigned int mainWin, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	barToMainWind = mainWin;
 	barWind = glutCreateSubWindow(mainWin,0,0,32*buttonCount,32);
@@ -48,9 +46,7 @@ void Toolbar::Open(unsigned int mainWin, int width, void (*d) (unsigned char, in
 	buttonSelectFaces = openTexture("buttonselectfaces.png");
 	buttonSelectEdges = openTexture("buttonselectedges.png");
 	buttonSelectPoints = openTexture("buttonselectpoints.png");
-	glutReshapeFunc(BarReshape);
 	glutMouseFunc(BarClick);
-	glutMotionFunc(BarMove);
 	glutKeyboardFunc(d);
 	glutKeyboardUpFunc(u);
 	glClearColor(1, 1, 1, 1);
@@ -63,7 +59,6 @@ void Toolbar::Close(){
 
 
 void BarClick(int button, int state, int x, int y) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			barLeftDown = true;
@@ -79,18 +74,6 @@ void BarClick(int button, int state, int x, int y) {
 	glutPostRedisplay();
 }
 
-void BarMove(int x, int y) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
-	if (barLeftDown) {
-
-	}
-	glutPostRedisplay();
-}
-void Toolbar::CallReshape(int w){
-	//glutSetWindow(barWind);
-	//BarReshape(w,50);
-	//glutSetWindow(barToMainWind);
-}
 int Toolbar::getCurrentButton(){
 	int btn = currentButton;
  return btn;
@@ -98,13 +81,6 @@ int Toolbar::getCurrentButton(){
 void Toolbar::stop(){
 	 currentButton = 0;
 	 startId(0);
-}
-
-void BarReshape(int w, int h){
-	glutReshapeWindow(w,32);
-    glViewport(0, 0, w, 32);
-
-    glutPostRedisplay();
 }
 
 void BarDisplay() {
@@ -139,7 +115,7 @@ void ProcessButton(int x, int y){
 
 
 void DrawButtons(bool picking){
-	float indent = -3.0;
+	//float indent = -3.0;
 	for (int i = 0; i < 12; i++) {
 		glPushMatrix();
 

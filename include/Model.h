@@ -48,7 +48,7 @@ public:
 	void DeleteVertex(int);
 	void DeleteEdge(int);
 	void AddNormal();
-	unsigned int FindEdge(unsigned int, unsigned int);
+	int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float, int);
 	void ProcessSelection(int, int, bool, bool, int);
 	void SetSelectType(int);
@@ -60,6 +60,5 @@ public:
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
 	void Subdivide();
-	unsigned int FindEdgeUsingDependancies(unsigned int, unsigned  int);
 	void ResetHandlePosition();
 };

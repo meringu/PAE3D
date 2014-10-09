@@ -42,6 +42,12 @@ GLuint skyBox;
 bool subToggle = false;
 int prev = -1;
 
+GLuint skyBoxXp;
+GLuint skyBoxXn;
+GLuint skyBoxYp;
+GLuint skyBoxYn;
+GLuint skyBoxZp;
+GLuint skyBoxZn;
 
 void PAE3D_DisplayMode(int);
 void PAE3D_Display();
@@ -59,9 +65,6 @@ void PAE3D_RepostMain();
 void PAE3D_ButtonPushed(int);
 
 int main(int argc, char** argv) {
-
-	//skyBox = openTexture("cubemap.jpg");
-
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 	g_color = new Color(PAE3D_LeftCLickColor, PAE3D_RepostMain);
 	glutInit(&argc, argv);
@@ -74,7 +77,7 @@ int main(int argc, char** argv) {
     skyBoxYn = openTexture("cubemapyn.jpg");
     skyBoxZp = openTexture("cubemapzp.jpg");
     skyBoxZn = openTexture("cubemapzn.jpg");
-    cubeMap = openCubeMap("cubemapxp.jpg", "cubemapxn.jpg", "cubemapyp.jpg", "cubemapyn.jpg", "cubemapzp.jpg", "cubemapzn.jpg");
+    openCubeMap("cubemapxp.jpg", "cubemapxn.jpg", "cubemapyp.jpg", "cubemapyn.jpg", "cubemapzp.jpg", "cubemapzn.jpg");
     g_model = new Model();
     glClearColor(0.5, 0.5, 0.5, 1);
     glutDisplayFunc(PAE3D_Display);
@@ -87,7 +90,7 @@ int main(int argc, char** argv) {
 	PAE3D_SetCamera();
 
     g_toolbar = new Toolbar(PAE3D_ButtonPushed);
-    g_toolbar->Open(g_mainWnd,g_nWinWidth, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
+    g_toolbar->Open(g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
 
 	glutMainLoop();
     return 0;
