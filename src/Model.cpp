@@ -17,6 +17,8 @@ int m_nListPolygon;
 int numVert, numNorm, numUV, numFace;
 GLUquadric* quadric = gluNewQuadric();
 
+void Sort(unsigned int* num, int numLength);
+
 Model::Model(char* filename) {
 	if (filename == NULL) {
 		SelectedHandle = PAE3D_SELECT_NO_HANDLE;
@@ -163,6 +165,7 @@ Model::Model(char* filename) {
 	else {
 		ReadOBJ(filename);
 	}
+	DeselectEverything();
 }
 
 void Model::ReadOBJ(const char *filename) {
@@ -331,24 +334,18 @@ void Model::ReadOBJ(const char *filename) {
 }
 
 void Model::AssignIntermediatePointers() {
-	time_t start;
-	time_t stop;
-
-	time(&start);
 	for (int i = 0; i < m_nNumEdge; i++) {
 		m_pEdgeArray[i].hasPoly1= false;
 		m_pEdgeArray[i].hasPoly2= false;
 	}
-	time(&stop);
-	printf("Remove polys from edges: %f\n", difftime(stop, start));
 
-	time(&start);
 	// points each edge to the neighboring polygons
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pPolyArray[i].edges = new unsigned int[m_pPolyArray[i].vertexCount];
 		for (int j = 0; j < m_pPolyArray[i].vertexCount; j++) {
 			int v1 = m_pPolyArray[i].vertices[j];
 			int v2 = m_pPolyArray[i].vertices[(j+1)%m_pPolyArray[i].vertexCount];
+			// Fix this, FindEdge() takes far to long
 			int edge = FindEdge(v1, v2);
 			m_pPolyArray[i].edges[j] = edge;
 			if (m_pEdgeArray[edge].hasPoly1) {
@@ -361,14 +358,11 @@ void Model::AssignIntermediatePointers() {
 			}
 		}
 	}
-	time(&stop);
-	printf("points each edge to the neighboring polygons: %f\n", difftime(stop, start));
 
 	for (int i = 0 ; i < m_nNumPoint; i++) {
 		m_pVertexArray[i].edgeCount = 0;
 	}
 
-	time(&start);
 	// points each vertex to the neighboring edges
 	for (int i = 0; i < m_nNumEdge; i++) {
 		int v1 = m_pEdgeArray[i].v1;
@@ -401,7 +395,6 @@ void Model::AssignIntermediatePointers() {
 		m_pVertexArray[v2].edges[m_pVertexArray[v2].edgeCount] = i;
 		m_pVertexArray[v2].edgeCount++;
 	}
-	printf("points each edge to the neighboring polygons: %f\n", difftime(stop, start));
 }
 
 Model::~Model(void) {
@@ -529,19 +522,27 @@ void Model::DeleteEdge(int index){
 	(void)index;
 }
 void Model::Subdivide(bool smooth) {
+	printf("\n\nsmooth: %d\n", m_nNumPolygon);
+	time_t start, end;
 	unsigned int points = m_nNumPoint;
 	unsigned int edges = m_nNumEdge;
 	unsigned int polys = m_nNumPolygon;
 
+	time(&start);
 	// finding face points
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
 			m_pPolyArray[i].c = m_nNumPoint;
 			PAE3D_Point p = PolyCenter(i);
 			p.selected = true;
+			p.edgeCount = 0;
+			p.edges = NULL;
 			AddVertex(p);
 		}
 	}
+	time(&end);
+	printf("finding face points: %f\n", difftime(start, end));
+	time(&start);
 	// finding edge points
 	for (int i = 0; i < m_nNumEdge; i++) {
 		if (m_pEdgeArray[i].selected) {
@@ -558,7 +559,6 @@ void Model::Subdivide(bool smooth) {
 					p.x += v3.x;
 					p.y += v3.y;
 					p.z += v3.z;
-					p.selected = true;
 					count++;
 				}
 				if (m_pEdgeArray[i].hasPoly2 && m_pPolyArray[m_pEdgeArray[i].poly2].selected) {
@@ -566,12 +566,14 @@ void Model::Subdivide(bool smooth) {
 					p.x += v3.x;
 					p.y += v3.y;
 					p.z += v3.z;
-					p.selected = true;
 					count++;
 				}
 				p.x /= count;
 				p.y /= count;
 				p.z /= count;
+				p.edgeCount = 0;
+				p.selected = true;
+				p.edges = new unsigned int[4];
 				m_pEdgeArray[i].c = m_nNumPoint;
 				AddVertex(p);
 			} else {
@@ -581,12 +583,17 @@ void Model::Subdivide(bool smooth) {
 				p.x = (v1.x + v2.x) / 2;
 				p.y = (v1.y + v2.y) / 2;
 				p.z = (v1.z + v2.z) / 2;
+				p.edgeCount = 0;
+				p.edges = new unsigned int[4];
 				p.selected = true;
 				m_pEdgeArray[i].c = m_nNumPoint;
 				AddVertex(p);
 			}
 		}
 	}
+	printf("finding edge points: %f\n", difftime(start, end));
+
+	time(&start);
 	// joining face points to edge points
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
@@ -597,10 +604,30 @@ void Model::Subdivide(bool smooth) {
 				e.hasPoly1 = false;
 				e.hasPoly2 = false;
 				e.selected = true;
+				if (m_pVertexArray[m_pPolyArray[i].c].edgeCount == 0) {
+					m_pVertexArray[m_pPolyArray[i].c].edgeCount = 1;
+					m_pVertexArray[m_pPolyArray[i].c].edges = new unsigned int[1];
+				} else {
+					m_pVertexArray[m_pPolyArray[i].c].edgeCount++;
+					unsigned int* temp = new unsigned int[m_pVertexArray[m_pPolyArray[i].c].edgeCount];
+					for (int k = 0; k < m_pVertexArray[m_pPolyArray[i].c].edgeCount-1; k++) {
+						temp[k] = m_pVertexArray[m_pPolyArray[i].c].edges[k];
+					}
+					delete(m_pVertexArray[m_pPolyArray[i].c].edges);
+					m_pVertexArray[m_pPolyArray[i].c].edges = temp;
+				}
+				m_pVertexArray[m_pPolyArray[i].c].edges[m_pVertexArray[m_pPolyArray[i].c].edgeCount-1] = m_nNumEdge;
+
+				m_pVertexArray[m_pEdgeArray[m_pPolyArray[i].edges[j]].c].edges[m_pVertexArray[m_pEdgeArray[m_pPolyArray[i].edges[j]].c].edgeCount] = m_nNumEdge;
+				m_pVertexArray[m_pEdgeArray[m_pPolyArray[i].edges[j]].c].edgeCount++;
+
 				AddEdge(e);
 			}
 		}
 	}
+	printf("joining face points to edge points: %f\n", difftime(start, end));
+
+	time(&start);
 	// adjusting original point positions
 	if (smooth) {
 		for (unsigned int i = 0; i < points; i++) {
@@ -660,6 +687,9 @@ void Model::Subdivide(bool smooth) {
 			m_pVertexArray[i].z = (w3 * f.z + w2 * r.z + w1 * m_pVertexArray[i].z) / n;
 		}
 	}
+	printf("adjusting original point positions: %f\n", difftime(start, end));
+
+	time(&start);
 	// splitting original edges in half
 	for (unsigned int i = 0; i < edges; i++) {
 		if (m_pEdgeArray[i].selected) {
@@ -678,6 +708,20 @@ void Model::Subdivide(bool smooth) {
 			e.hasPoly2 = false;
 			e.selected = true;
 			int c = m_pEdgeArray[i].c;
+			e.c = m_pEdgeArray[i].c;
+			m_pEdgeArray[i].nextEdge = m_nNumEdge;
+			m_pVertexArray[m_pEdgeArray[i].c].edges[m_pVertexArray[m_pEdgeArray[i].c].edgeCount] = i;
+			m_pVertexArray[m_pEdgeArray[i].c].edgeCount++;
+
+			m_pVertexArray[m_pEdgeArray[i].c].edges[m_pVertexArray[m_pEdgeArray[i].c].edgeCount] = m_nNumEdge;
+			m_pVertexArray[m_pEdgeArray[i].c].edgeCount++;
+
+			for (int j = 0; j < m_pVertexArray[m_pEdgeArray[i].v2].edgeCount; j++) {
+				if (m_pVertexArray[m_pEdgeArray[i].v2].edges[j] == i) {
+					m_pVertexArray[m_pEdgeArray[i].v2].edges[j] = m_nNumEdge;
+				}
+			}
+
 			AddEdge(e);
 			m_pEdgeArray[i].v2 = m_pEdgeArray[i].c;
 			m_pEdgeArray[i].hasPoly1 = false;
@@ -694,20 +738,11 @@ void Model::Subdivide(bool smooth) {
 				int copied = 0;
 				for (int j = 0; j < m_pPolyArray[other].vertexCount - 1; j++) {
 					m_pPolyArray[other].vertices[j + copied] = oldVerts[j];
-					if (-1
-							== FindEdge(oldVerts[j],
-									oldVerts[(j + 1)
-											% (m_pPolyArray[other].vertexCount
-													- 1)])) {
-						m_pPolyArray[other].edges[j + copied] = FindEdge(
-								oldVerts[j], c);
+					if (-1 == FindEdge(oldVerts[j],	oldVerts[(j+1)%(m_pPolyArray[other].vertexCount-1)])) {
+						m_pPolyArray[other].edges[j + copied] = FindEdge(oldVerts[j], c);
 						copied++;
 						m_pPolyArray[other].vertices[j + copied] = c;
-						m_pPolyArray[other].edges[j + copied] =
-								FindEdge(
-										oldVerts[(j + 1)
-												% (m_pPolyArray[other].vertexCount
-														- 1)], c);
+						m_pPolyArray[other].edges[j + copied] =	FindEdge(oldVerts[(j+1)%(m_pPolyArray[other].vertexCount-1)], c);
 					} else {
 						m_pPolyArray[other].edges[j + copied] = oldEdges[j];
 					}
@@ -715,6 +750,9 @@ void Model::Subdivide(bool smooth) {
 			}
 		}
 	}
+	printf("splitting original edges in half: %f\n", difftime(start, end));
+
+	time(&start);
 	// creating new faces
 	for (unsigned int i = 0; i < polys; i++) {
 		if (m_pPolyArray[i].selected) {
@@ -726,10 +764,33 @@ void Model::Subdivide(bool smooth) {
 			m_pPolyArray[i].vertices[0] = oldVertices[0];
 			m_pPolyArray[i].vertices[1] = m_pEdgeArray[oldEdges[0]].c;
 			m_pPolyArray[i].vertices[2] = m_pPolyArray[i].c;
-			m_pPolyArray[i].vertices[3] = m_pEdgeArray[oldEdges[oldVertexCount
-					- 1]].c;
+			m_pPolyArray[i].vertices[3] = m_pEdgeArray[oldEdges[oldVertexCount-1]].c;
 			m_pPolyArray[i].edges = new unsigned int[4];
-			m_pPolyArray[i].n = PolyNormal(i);
+
+			if (m_pEdgeArray[oldEdges[0]].v1 == oldVertices[0] || m_pEdgeArray[oldEdges[0]].v2 == oldVertices[0])
+				m_pPolyArray[i].edges[0] = oldEdges[0];
+			else
+				m_pPolyArray[i].edges[0] = m_pEdgeArray[oldEdges[0]].nextEdge;
+
+			for (int j = 0; j < m_pVertexArray[m_pPolyArray[i].c].edgeCount; j++) {
+				if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[j]].v1 == m_pEdgeArray[oldEdges[0]].c ||
+						m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[j]].v2 == m_pEdgeArray[oldEdges[0]].c) {
+					m_pPolyArray[i].edges[1] = m_pVertexArray[m_pPolyArray[i].c].edges[j];
+				}
+			}
+
+			for (int j = 0; j < m_pVertexArray[m_pPolyArray[i].c].edgeCount; j++) {
+				if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[j]].v1 == m_pEdgeArray[oldEdges[oldVertexCount-1]].c ||
+						m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[j]].v2 == m_pEdgeArray[oldEdges[oldVertexCount-1]].c) {
+					m_pPolyArray[i].edges[2] = m_pVertexArray[m_pPolyArray[i].c].edges[j];
+				}
+			}
+
+			if (m_pEdgeArray[oldEdges[oldVertexCount-1]].v1 == oldVertices[0] || m_pEdgeArray[oldEdges[oldVertexCount-1]].v2 == oldVertices[0])
+				m_pPolyArray[i].edges[3] = oldEdges[oldVertexCount-1];
+			else
+				m_pPolyArray[i].edges[3] = m_pEdgeArray[oldEdges[oldVertexCount-1]].nextEdge;
+
 			for (int j = 1; j < oldVertexCount; j++) {
 				PAE3D_Polygon poly2;
 				poly2.vertexCount = 4;
@@ -737,9 +798,32 @@ void Model::Subdivide(bool smooth) {
 				poly2.vertices[0] = oldVertices[j];
 				poly2.vertices[1] = m_pEdgeArray[oldEdges[j]].c;
 				poly2.vertices[2] = m_pPolyArray[i].c;
-				poly2.vertices[3] = m_pEdgeArray[oldEdges[j - 1]].c;
+				poly2.vertices[3] = m_pEdgeArray[oldEdges[j-1]].c;
 				poly2.selected = m_pPolyArray[i].selected;
 				poly2.edges = new unsigned int[4];
+
+				if (m_pEdgeArray[oldEdges[j]].v1 == oldVertices[j] || m_pEdgeArray[oldEdges[j]].v2 == oldVertices[j])
+					poly2.edges[0] = oldEdges[j];
+				else
+					poly2.edges[0] = m_pEdgeArray[oldEdges[j]].nextEdge;
+				for (int k = 0; k < m_pVertexArray[m_pPolyArray[i].c].edgeCount; k++) {
+					if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[k]].v1 == m_pEdgeArray[oldEdges[j]].c ||
+							m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[k]].v2 == m_pEdgeArray[oldEdges[j]].c) {
+						poly2.edges[1] = m_pVertexArray[m_pPolyArray[i].c].edges[k];
+					}
+				}
+				for (int k = 0; k < m_pVertexArray[m_pPolyArray[i].c].edgeCount; k++) {
+					if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[k]].v1 == m_pEdgeArray[oldEdges[j-1]].c ||
+							m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].c].edges[k]].v2 == m_pEdgeArray[oldEdges[j-1]].c) {
+						poly2.edges[2] = m_pVertexArray[m_pPolyArray[i].c].edges[k];
+					}
+				}
+				if ((m_pEdgeArray[oldEdges[j-1]].v1 == oldVertices[j] && m_pEdgeArray[oldEdges[j-1]].v2 == m_pEdgeArray[oldEdges[j-1]].c) ||
+						(m_pEdgeArray[oldEdges[j-1]].v2 == oldVertices[j] && m_pEdgeArray[oldEdges[j-1]].v1 == m_pEdgeArray[oldEdges[j-1]].c))
+					poly2.edges[3] = oldEdges[j-1];
+				else
+					poly2.edges[3] = m_pEdgeArray[oldEdges[j-1]].nextEdge;
+
 				poly2.c = 0;
 				poly2.mat = m_pPolyArray[i].mat;
 				poly2.selected = true;
@@ -751,17 +835,78 @@ void Model::Subdivide(bool smooth) {
 			delete (oldEdges);
 		}
 	}
+	printf("creating new faces: %f\n", difftime(start, end));
+
+	time(&start);
 	// clean dependencies
-	AssignIntermediatePointers();
+	for (int i = 0; i < m_nNumEdge; i++) {
+		m_pEdgeArray[i].hasPoly1 = false;
+		m_pEdgeArray[i].hasPoly2 = false;
+	}
+	for (int i = 0; i < m_nNumPolygon; i ++) {
+		for (int j = 0; j < m_pPolyArray[i].vertexCount; j++) {
+			for (int k = 0; k < m_pVertexArray[m_pPolyArray[i].vertices[j]].edgeCount; k++) {
+				bool yes = false;
+				if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].v1 == m_pPolyArray[i].vertices[j]) {
+					for (int l = 0; l < m_pPolyArray[i].vertexCount; l++) {
+						if (m_pPolyArray[i].vertices[l] == m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].v2) {
+							yes = true;
+							break;
+						}
+					}
+				} else if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].v2 == m_pPolyArray[i].vertices[j]) {
+					for (int l = 0; l < m_pPolyArray[i].vertexCount; l++) {
+						if (m_pPolyArray[i].vertices[l] == m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].v1) {
+							yes = true;
+							break;
+						}
+					}
+				}
+				if (yes) {
+					if (m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].hasPoly1) {
+						m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].poly2 = i;
+						m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].hasPoly2 = true;
+					} else {
+						m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].poly1 = i;
+						m_pEdgeArray[m_pVertexArray[m_pPolyArray[i].vertices[j]].edges[k]].hasPoly1 = true;
+					}
+				}
+			}
+		}
+	}
+	printf("clean dependencies: %f\n", difftime(start, end));
+
+	time(&start);
 	// compute normals
+	for (int i = 0; i < m_nNumPoint; i++) {
+		Sort(m_pVertexArray[i].edges, m_pVertexArray[i].edgeCount);
+	}
+
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pPolyArray[i].n = PolyNormal(i);
 	}
 	for (int i = 0; i < m_nNumPoint; i++) {
 		CalculateNormal(i);
 	}
+
+	printf("compute normals: %f\n", difftime(start, end));
+	printf("done: %d\n\n\n", m_nNumPolygon);
 }
 
+void Sort(unsigned int* num, int numLength) {
+	int i, j, first, temp;
+	for (i= numLength - 1; i > 0; i--)
+		{
+		first = 0;                 // initialize to subscript of first element
+		for (j=1; j<=i; j++) {   // locate smallest between positions 1 and i.
+			if (num[j] < num[first])
+				first = j;
+		}
+		temp = num[first];   // Swap smallest found with element in position i.
+		num[first] = num[i];
+		num[i] = temp;
+	}
+}
 void Model::SelectAll() {
 	m_hasSelected = true;
 	for (int i = 0 ; i < m_nNumPoint; i++) {
@@ -773,6 +918,7 @@ void Model::SelectAll() {
 	for (int i = 0 ; i < m_nNumEdge; i++) {
 		m_pEdgeArray[i].selected = true;
 	}
+	ResetHandlePosition();
 }
 
 void Model::MoveSelected(float dx, float dy, float dz) {

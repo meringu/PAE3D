@@ -58,7 +58,7 @@ struct PAE3D_Polygon {
 	int vertexCount;
 	unsigned int* vertices;
 	unsigned int* edges;
-	int c;					// used for subdivision
+	unsigned int c;					// used for subdivision
 	int mat;
 };
 
