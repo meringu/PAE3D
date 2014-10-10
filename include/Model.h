@@ -40,7 +40,6 @@ public:
 	void RenderEdges(float);
 	void RenderFaces(Color*, bool);
 	void RenderSelectedFacesHandle(float, int);
-	void Smooth();
 	void AddVertex(PAE3D_Point);
 	void AddEdge(PAE3D_Edge);
 	void AddPoly(PAE3D_Polygon);
@@ -59,7 +58,8 @@ public:
 	void Duplicate();
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
-	void Subdivide();
+	void Subdivide(bool);
 	void ResetHandlePosition();
 	void ReadOBJ(const char*);
+	void SelectAll();
 };

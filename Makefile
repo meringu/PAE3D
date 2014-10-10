@@ -9,7 +9,7 @@ SRC = src/
 
 all: $(BUILD)PAE3D
 
-$(BUILD)PAE3D: $(BUILD)main.o $(BUILD)Model.o $(BUILD)Color.o $(BUILD)Handle.o $(BUILD)ImageLoader.o $(BUILD)Toolbar.o
+$(BUILD)PAE3D: $(BUILD)main.o $(BUILD)Model.o $(BUILD)Color.o $(BUILD)Handle.o $(BUILD)ImageLoader.o $(BUILD)Toolbar.o $(BUILD)RenderHelper.o
 	$(CC) -o $@ $^ $(LPATH) $(LDPATH) $(LIBS)
 	$(RM) $(BUILD)*.o
 	

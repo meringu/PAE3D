@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <iostream>
 #include "define.h"
 #include "Model.h"
 #include "ImageLoader.h"
-#include <iostream>
 #include "Color.h"
 #include "Toolbar.h"
+#include "RenderHelper.h"
 
 using namespace std;
 
@@ -54,8 +55,6 @@ void PAE3D_Display();
 void PAE3D_Reshape(int w, int h);
 void PAE3D_SetLights();
 void PAE3D_SetCamera();
-void PAE3D_RenderAxes();
-void PAE3D_RenderGrid();
 void PAE3D_MouseClick(int button, int state, int x, int y);
 void PAE3D_MouseMove(int x, int y);
 void PAE3D_KeyboardDown(unsigned char, int, int);
@@ -79,9 +78,7 @@ int main(int argc, char** argv) {
 			exit(0);
 		}
 	}
-
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
-
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(g_nWinWidth, g_nWinHeight);
@@ -103,10 +100,8 @@ int main(int argc, char** argv) {
     glutKeyboardUpFunc(PAE3D_KeyboardUp);
     PAE3D_SetLights();
 	PAE3D_SetCamera();
-
 	g_color = new Color(PAE3D_RepostMain, g_mainWnd, g_nWinHeight, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
     g_toolbar = new Toolbar(PAE3D_ButtonPushed, g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
-
 	glutMainLoop();
     return 0;
 }
@@ -139,10 +134,16 @@ void PAE3D_ButtonPushed (int button) {
 			displayMode%=2;
 			break;
 		case 8:
-			g_model->Subdivide();
+			g_model->Subdivide(false);
 			break;
 		case 9:
-			g_model->Smooth();
+			g_model->Subdivide(true);
+			break;
+		case 10:
+			g_model->SelectAll();
+			break;
+		case 11:
+			leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
 			break;
 	}
 }
@@ -168,7 +169,7 @@ void PAE3D_Display() {
 		switch (displayMode) {
 		case PAE3D_EDIT_MODE:
 			glDisable(GL_LIGHTING);
-			PAE3D_RenderGrid();
+			PAE3D_RenderGrid(zoom);
 			PAE3D_RenderAxes();
 			g_model->RenderVertices(zoom);
 			g_model->RenderEdges(zoom);
@@ -176,96 +177,17 @@ void PAE3D_Display() {
 			g_model->RenderFaces(g_color, false);
 			break;
 		case PAE3D_PHONG_MODE:
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			float oldZoom = zoom;
 			zoom = 1;
 			PAE3D_Point oldCenter = g_center;
 			g_center.x = 0;
 			g_center.y = 0;
 			g_center.z = 0;
-			float c = 0.001; // move faces closer by a 10th of a pixel to remove artifacts at seams
 			PAE3D_SetCamera();
-
-			glBindTexture(GL_TEXTURE_2D, skyBoxXp);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(1-c, -1, -1);
-			glTexCoord2f(0, 1);
-			glVertex3f(1-c, 1, -1);
-			glTexCoord2f(1, 1);
-			glVertex3f(1-c, 1, 1);
-			glTexCoord2f(1, 0);
-			glVertex3f(1-c, -1, 1);
-			glEnd();
-
-			glBindTexture(GL_TEXTURE_2D, skyBoxXn);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(c-1, -1, 1);
-			glTexCoord2f(0, 1);
-			glVertex3f(c-1, 1, 1);
-			glTexCoord2f(1, 1);
-			glVertex3f(c-1, 1, -1);
-			glTexCoord2f(1, 0);
-			glVertex3f(c-1, -1, -1);
-			glEnd();
-
-			glBindTexture(GL_TEXTURE_2D, skyBoxZp);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(1, -1, 1-c);
-			glTexCoord2f(0, 1);
-			glVertex3f(1, 1, 1-c);
-			glTexCoord2f(1, 1);
-			glVertex3f(-1, 1, 1-c);
-			glTexCoord2f(1, 0);
-			glVertex3f(-1, -1, 1-c);
-			glEnd();
-
-			glBindTexture(GL_TEXTURE_2D, skyBoxZn);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(-1, -1, c-1);
-			glTexCoord2f(0, 1);
-			glVertex3f(-1, 1, c-1);
-			glTexCoord2f(1, 1);
-			glVertex3f(1, 1, c-1);
-			glTexCoord2f(1, 0);
-			glVertex3f(1, -1, c-1);
-			glEnd();
-
-			glBindTexture(GL_TEXTURE_2D, skyBoxYp);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(1, 1-c, 1);
-			glTexCoord2f(0, 1);
-			glVertex3f(1, 1-c, -1);
-			glTexCoord2f(1, 1);
-			glVertex3f(-1, 1-c, -1);
-			glTexCoord2f(1, 0);
-			glVertex3f(-1, 1-c, 1);
-			glEnd();
-
-			glBindTexture(GL_TEXTURE_2D, skyBoxYn);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(1, c-1, -1);
-			glTexCoord2f(0, 1);
-			glVertex3f(1, c-1, 1);
-			glTexCoord2f(1, 1);
-			glVertex3f(-1, c-1, 1);
-			glTexCoord2f(1, 0);
-			glVertex3f(-1, c-1, -1);
-			glEnd();
-
+			PAE3D_RenderSkyBox(skyBoxXp, skyBoxXn, skyBoxYp, skyBoxYn, skyBoxZp, skyBoxZn);
 			zoom = oldZoom;
 			g_center = oldCenter;
 			PAE3D_SetCamera();
-			glDisable(GL_TEXTURE_2D);
-			glEnable(GL_LIGHTING);
-			glClear(GL_DEPTH_BUFFER_BIT);
 			g_model->RenderFaces(g_color, true);
 			break;
 		}
@@ -330,7 +252,7 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 
 	switch (key) {
 	case ' ':
-		g_model->Smooth();
+		g_model->Subdivide(true);
 		break;
 	case 'f':
 		g_model->SetSelectType(PAE3D_SELECT_FACES);
@@ -358,10 +280,13 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		displayMode%=2;
 		break;
 	case 'd':
-		g_model->Subdivide();
+		g_model->Subdivide(false);
 		break;
 	case 'c':
 		leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+		break;
+	case 'a':
+		g_model->SelectAll();
 		break;
 	}
 
@@ -485,61 +410,8 @@ void PAE3D_SetCamera()
 	gluPerspective(PAE3D_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, PAE3D_ZNEAR_3D, PAE3D_ZFAR_3D);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
 	float xpos = -zoom*cos(tilt*M_PI/180)*sin(rotation*M_PI/180) + g_center.x;
 	float ypos = zoom*sin(tilt*M_PI/180) + g_center.y;
 	float zpos = zoom*cos(tilt*M_PI/180)*cos(rotation*M_PI/180) + g_center.z;
-
 	gluLookAt(xpos, ypos, zpos, g_center.x, g_center.y, g_center.z, 0, 1, 0);
 }
-
-void PAE3D_RenderAxes() {
-	// X-AXIS
-	glColor3f(1, 0, 0);
-	glVertex3f(0, 0, 0);
-	glVertex3f(1000, 0, 0);
-	// Y-AXIS
-	glColor3f(0, 1, 0);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 1000, 0);
-	// Z-AXIS
-	glColor3f(0, 0, 1);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 0, 1000);
-	glEnd();
-}
-
-void PAE3D_RenderGrid() {
-	float level = pow(10, (int) log10(zoom) - 1);
-	glBegin(GL_LINES);
-	glColor3f(0.3, 0.3, 0.3);
-	for (int x = -10; x <= 10; x++) {
-		if (x == 0) {
-			glVertex3f(x * level, 0, 0);
-			glVertex3f(x * level, 0, -10 * level);
-		} else {
-			glVertex3f(x * level, 0, 10 * level);
-			glVertex3f(x * level, 0, -10 * level);
-		}
-	}
-	for (int z = -10; z <= 10; z++) {
-		if (z == 0) {
-			glVertex3f(0, 0, z * level);
-			glVertex3f(-10 * level, 0, z * level);
-		} else {
-			glVertex3f(10 * level, 0, z * level);
-			glVertex3f(-10 * level, 0, z * level);
-		}
-	}
-}
-
-
-
-
-
-
-
-
-
-
-

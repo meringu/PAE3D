@@ -86,7 +86,7 @@ void Click(int button, int state, int x, int y) {
 		if (state == GLUT_DOWN) {
 			leftDown = true;
 			if (percY > 0.8) {
-				mats[0].col.r = (x - 1) / 256.0;
+				mats[cur].col.r = (x - 1) / 256.0;
 			}
 			else if (percY > 0.6) {
 				mats[cur].col.g = (x - 1) / 256.0;

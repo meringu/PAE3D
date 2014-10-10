@@ -24,8 +24,6 @@ typedef struct texInfo {
 	bool hasAlpha;
 } TextureInfo;
 
-
-
 //static GLuint cubeMap;
 
 
