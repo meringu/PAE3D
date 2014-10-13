@@ -23,11 +23,11 @@ int currentButton = 0;
 
 int buttonCount = 12;
 
-GLuint buttonSelectFaces;
-GLuint buttonSelectEdges;
-GLuint buttonSelectPoints;
+int (*getParami)(int);
 
-Toolbar::Toolbar(void (*i)(int), unsigned int mainWin, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
+GLuint buttons;
+
+Toolbar::Toolbar(void (*i)(int), unsigned int mainWin, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int), int (*pi)(int)) {
 	startId = i;
 	currentButton = 0;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -36,13 +36,12 @@ Toolbar::Toolbar(void (*i)(int), unsigned int mainWin, void (*d) (unsigned char,
 	glClearColor(0,0,0,0);
 	glutDisplayFunc(BarDisplay);
 	BarSetCamera();
-	buttonSelectFaces = openTexture("buttonselectfaces.png");
-	buttonSelectEdges = openTexture("buttonselectedges.png");
-	buttonSelectPoints = openTexture("buttonselectpoints.png");
+	buttons = openTexture("textures/toolbar.jpg");
 	glutMouseFunc(BarClick);
 	glutKeyboardFunc(d);
 	glutKeyboardUpFunc(u);
 	glClearColor(1, 1, 1, 1);
+	getParami = pi;
 }
 
 Toolbar::~Toolbar() {
@@ -106,58 +105,70 @@ void ProcessButton(int x, int y){
 
 
 void DrawButtons(bool picking){
-	//float indent = -3.0;
-	for (int i = 0; i < 12; i++) {
-		glPushMatrix();
+	if (!picking) {
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, buttons);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0);
+		glVertex3f(-1, -1, 0);
+		glTexCoord2f(1, 0);
+		glVertex3f(1, -1, 0);
+		glTexCoord2f(1, 1);
+		glVertex3f(1, 1, 0);
+		glTexCoord2f(0, 1);
+		glVertex3f(-1, 1, 0);
+		glEnd();
+		glDisable(GL_TEXTURE_2D);
 
-		//glTranslatef(indent + (0.35 * i), 0, 0);
+		bool highlighted[12] = {
+				getParami(PAE3D_RIGHT_CLICK) == PAE3D_SELECT_FACES,
+				getParami(PAE3D_RIGHT_CLICK) == PAE3D_SELECT_EDGES,
+				getParami(PAE3D_RIGHT_CLICK) == PAE3D_SELECT_VERTICES,
+				false,
+				getParami(PAE3D_HANDLE_MODE) == PAE3D_HANDLE_MOVE,
+				getParami(PAE3D_HANDLE_MODE) == PAE3D_HANDLE_SCALE,
+				false, false, false, false,
+				getParami(PAE3D_LEFT_CLICK) == PAE3D_LEFTCLICK_COLOR,
+				getParami(PAE3D_RENDER_MODE) == PAE3D_PHONG_MODE};
 
-		if (!picking) {
+		glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4f(1.0, 1.0, 1.0, 0.3);
 
-			if (i < 3) {
-				glEnable(GL_TEXTURE_2D);
-				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				switch(i) {
-				case 0:
-					glBindTexture(GL_TEXTURE_2D, buttonSelectFaces);
-					break;
-				case 1:
-					glBindTexture(GL_TEXTURE_2D, buttonSelectEdges);
-					break;
-				case 2:
-					glBindTexture(GL_TEXTURE_2D, buttonSelectPoints);
-					break;
-				}
+		for (int i = 0; i < 12; i++) {
+			if (highlighted[i]) {
+			glBegin(GL_QUADS);
+			glVertex3f(-1+i*1.0/6, -1, 0);
+			glVertex3f(-1+(i+1)*1.0/6, -1, 0);
+			glVertex3f(-1+(i+1)*1.0/6, 1, 0);
+			glVertex3f(-1+i*1.0/6, 1, 0);
+			glEnd();
 			}
-			/* put textures here */
-			glColor3f(1, 0, 0);
-		} else {
+		}
+
+
+		glDisable(GL_BLEND);
+	} else {
+		for (int i = 0; i < 12; i++) {
+
 			int id = i + 1;
 			int r = (id & 0x000000FF) >> 0;
 			int g = (id & 0x0000FF00) >> 8;
 			int b = (id & 0x00FF0000) >> 16;
 			glColor3f(r / 255.0, g / 255.0, b / 255.0);
+
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex3f(-1 + i * 2.0 / buttonCount, -1, 0);
+			glTexCoord2f(1, 0);
+			glVertex3f(-1 + (i + 1) * 2.0 / buttonCount, -1, 0);
+			glTexCoord2f(1, 1);
+			glVertex3f(-1 + (i + 1) * 2.0 / buttonCount, 1, 0);
+			glTexCoord2f(0, 1);
+			glVertex3f(-1 + i * 2.0 / buttonCount, 1, 0);
+			glEnd();
 		}
-		glBegin(GL_QUADS);
-		glTexCoord2f(0, 0);
-		glVertex3f(-1 + i * 2.0/buttonCount, -1, 0);
-		glTexCoord2f(1, 0);
-		glVertex3f(-1 + (i+1) * 2.0/buttonCount, -1, 0);
-		glTexCoord2f(1, 1);
-		glVertex3f(-1 + (i+1) * 2.0/buttonCount, 1, 0);
-		glTexCoord2f(0, 1);
-		glVertex3f(-1 + i * 2.0/buttonCount, 1, 0);
-		glEnd();
-		if (!picking) {
-
-			if (i < 3) {
-				glDisable(GL_TEXTURE_2D);
-			}
-		}
-
-
-		glPopMatrix();
 	}
 }
 

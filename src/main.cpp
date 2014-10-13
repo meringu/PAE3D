@@ -18,22 +18,15 @@ GLuint g_nWinWidth = PAE3D_WIN_WIDTH;
 GLuint g_nWinHeight = PAE3D_WIN_HEIGHT;
 Model* g_model = NULL;
 Toolbar* g_toolbar = NULL;
-#define PAE3D_RENDER 1
-#define PAE3D_SELECT_RIGHT 2
-#define PAE3D_SELECT_LEFT 3
-#define PAE3D_LEFTCLICK_NOTHING 0
-#define PAE3D_LEFTCLICK_COLOR 1
-#define PAE3D_EDIT_MODE 0
-#define PAE3D_PHONG_MODE 1
 
 int displayMode = PAE3D_EDIT_MODE;
-int handleMode = PAE3D_HANLE_MOVE;
-int leftCLickOperation;
+int handleMode = PAE3D_HANDLE_MOVE;
+int leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 int mode = PAE3D_RENDER;
 bool q_middleClickDown = false;
 bool q_leftClickDown = false;
-int g_lastX, g_lastY = 0;
-float rotation = 45, tilt = 30, zoom = 10;
+int g_lastX = 0, g_lastY = 0;
+float rotation = 45, tilt = 25, zoom = 10;
 bool m_ctrlDownNow = false, m_shiftDownNow = false;
 bool m_ctrlDownLastMiddleClick = false, m_shiftDownLastMiddleClick = false;
 PAE3D_Point g_center;
@@ -61,6 +54,7 @@ void PAE3D_KeyboardDown(unsigned char, int, int);
 void PAE3D_KeyboardUp(unsigned char, int, int);
 void PAE3D_RepostMain();
 void PAE3D_ButtonPushed(int);
+int getParami(int);
 
 int main(int argc, char** argv) {
 	const char* usage = "Usage: PAE3D [option]\n\nOption\t\tMeaning\n --help\t\tShow this message\n -o <file>\tLoad .obj file\n\t\tLoad default cube\n";
@@ -83,13 +77,13 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(g_nWinWidth, g_nWinHeight);
     g_mainWnd = glutCreateWindow("PAE3D");
-    skyBoxXp = openTexture("cubemapxp.jpg");
-    skyBoxXn = openTexture("cubemapxn.jpg");
-    skyBoxYp = openTexture("cubemapyp.jpg");
-    skyBoxYn = openTexture("cubemapyn.jpg");
-    skyBoxZp = openTexture("cubemapzp.jpg");
-    skyBoxZn = openTexture("cubemapzn.jpg");
-    openCubeMap("cubemapxp.jpg", "cubemapxn.jpg", "cubemapyp.jpg", "cubemapyn.jpg", "cubemapzp.jpg", "cubemapzn.jpg");
+    skyBoxXp = openTexture("textures/cubemapxp.jpg");
+    skyBoxXn = openTexture("textures/cubemapxn.jpg");
+    skyBoxYp = openTexture("textures/cubemapyp.jpg");
+    skyBoxYn = openTexture("textures/cubemapyn.jpg");
+    skyBoxZp = openTexture("textures/cubemapzp.jpg");
+    skyBoxZn = openTexture("textures/cubemapzn.jpg");
+    openCubeMap("textures/cubemapxp.jpg", "textures/cubemapxn.jpg", "textures/cubemapyp.jpg", "textures/cubemapyn.jpg", "textures/cubemapzp.jpg", "textures/cubemapzn.jpg");
     g_model = new Model(file);
     glClearColor(0.5, 0.5, 0.5, 1);
     glutDisplayFunc(PAE3D_Display);
@@ -101,9 +95,25 @@ int main(int argc, char** argv) {
     PAE3D_SetLights();
 	PAE3D_SetCamera();
 	g_color = new Color(PAE3D_RepostMain, g_mainWnd, g_nWinHeight, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
-    g_toolbar = new Toolbar(PAE3D_ButtonPushed, g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
+    g_toolbar = new Toolbar(PAE3D_ButtonPushed, g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp, getParami);
 	glutMainLoop();
     return 0;
+}
+
+int getParami(int value) {
+	if (value == PAE3D_RIGHT_CLICK) {
+		return g_model->m_SelectMode;
+	}
+	if (value == PAE3D_LEFT_CLICK) {
+		return leftCLickOperation;
+	}
+	if (value == PAE3D_RENDER_MODE) {
+		return displayMode;
+	}
+	if (value == PAE3D_HANDLE_MODE) {
+		return handleMode;
+	}
+	return -1;
 }
 
 void PAE3D_ButtonPushed (int button) {
@@ -121,29 +131,39 @@ void PAE3D_ButtonPushed (int button) {
 			leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 			break;
 		case 4:
-			handleMode = PAE3D_HANLE_MOVE;
-			break;
-		case 5:
-			handleMode = PAE3D_HANLE_SCALE;
-			break;
-		case 6:
-			g_model->Extrude();
-			break;
-		case 7:
-			displayMode++;
-			displayMode%=2;
-			break;
-		case 8:
-			g_model->Subdivide(false);
-			break;
-		case 9:
-			g_model->Subdivide(true);
-			break;
-		case 10:
 			g_model->SelectAll();
 			break;
+		case 5:
+			handleMode = PAE3D_HANDLE_MOVE;
+			break;
+		case 6:
+			handleMode = PAE3D_HANDLE_SCALE;
+			break;
+		case 7:
+			g_model->Extrude();
+			break;
+		case 8:
+			//g_model->merge();
+			break;
+		case 9:
+			g_model->Subdivide(false);
+			break;
+		case 10:
+			g_model->Subdivide(true);
+			break;
 		case 11:
-			leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+			switch(leftCLickOperation){
+			case PAE3D_LEFTCLICK_NOTHING:
+				leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+				break;
+			case PAE3D_LEFTCLICK_COLOR:
+				leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
+				break;
+			}
+			break;
+		case 12:
+			displayMode++;
+			displayMode%=2;
 			break;
 	}
 }
@@ -267,10 +287,10 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
 	case 'm':
-		handleMode = PAE3D_HANLE_MOVE;
+		handleMode = PAE3D_HANDLE_MOVE;
 		break;
 	case 's':
-		handleMode = PAE3D_HANLE_SCALE;
+		handleMode = PAE3D_HANDLE_SCALE;
 		break;
 	case 'x':
 		g_model->Extrude();
@@ -283,7 +303,14 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		g_model->Subdivide(false);
 		break;
 	case 'c':
-		leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+		switch(leftCLickOperation){
+		case PAE3D_LEFTCLICK_NOTHING:
+			leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
+			break;
+		case PAE3D_LEFTCLICK_COLOR:
+			leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
+			break;
+		}
 		break;
 	case 'a':
 		g_model->SelectAll();
@@ -359,7 +386,7 @@ void PAE3D_MouseMove(int x, int y) {
 	}
 	if (q_leftClickDown) {
 		switch(handleMode) {
-		case PAE3D_HANLE_MOVE:
+		case PAE3D_HANDLE_MOVE:
 			switch (g_model->SelectedHandle) {
 			case PAE3D_SELECT_X_HANDLE:
 				g_model->MoveSelected(-worldDX * 2, 0, 0);
@@ -372,7 +399,7 @@ void PAE3D_MouseMove(int x, int y) {
 				break;
 			}
 			break;
-		case PAE3D_HANLE_SCALE:
+		case PAE3D_HANDLE_SCALE:
 			switch (g_model->SelectedHandle) {
 			case PAE3D_SELECT_X_HANDLE:
 				g_model->ScaleSelected(-worldDX * 2 / zoom * 10, 0, 0);
