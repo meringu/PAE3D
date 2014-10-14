@@ -1145,6 +1145,10 @@ void Model::RenderFaces(Color* cols, bool phong) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+
+			delete(ambient);
+			delete(diffuse);
+			delete(specular);
 		} else {
 			GLfloat* specular = new GLfloat[4];
 			specular[0] = 0;
