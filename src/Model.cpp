@@ -2030,24 +2030,11 @@ void Model::Merge(){
 	int edgeCount = 0;
 	int faceCount = 0;
 	//deselect erroneous
-	for (int i = 0; i < m_nNumPoint; i++) {
-		if (m_pVertexArray[i].selected) {
-			m_pVertexArray[i].selected = false;
-			}
-	}
-	for (int i = 0; i < m_nNumEdge; i++) {
-		if (m_pEdgeArray[i].selected) {
-			m_pEdgeArray[i].selected = false;
-			}
-	}
-	//face Select and Count
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
 			faceCount++;
-			CascadeFaceSelection(i);
 		}
 	}
-	if(faceCount ==0 ){	return;}
 
 	unsigned int* facesInd = new unsigned int[faceCount];
 	int position = 0;
