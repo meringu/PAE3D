@@ -270,7 +270,6 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	int sp = glutGetModifiers();
 	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
 	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
-	printf("key: %i \n",key);
 	switch (key) {
 	case 'g':
 		g_model->Subdivide(true);

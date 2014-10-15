@@ -2000,6 +2000,23 @@ void Model::DeleteSelection(){
 			}
 		}
 	}
+
+	for (int k = 0; k < m_nNumPolygon; k++) {
+			if (m_pPolyArray[k].selected) {
+				DeletePoly(k); k--;
+			}
+	}
+	for (int k = 0; k < m_nNumEdge; k++) {
+		if (m_pEdgeArray[k].selected) {
+			DeleteEdge(k);k--;
+		}
+	}
+	for (int k = 0; k < m_nNumPoint; k++) {
+		if (m_pVertexArray[k].selected) {
+			DeleteVertex(k);k--;
+		}
+	}
+
 	AssignIntermediatePointers();
 	ResetHandlePosition();
 	delete(tempVertsInd);
