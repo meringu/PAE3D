@@ -46,6 +46,7 @@ public:
 	void DeletePoly(int);
 	void DeleteVertex(int);
 	void DeleteEdge(int);
+	void Merge();
 	void AddNormal();
 	int FindEdge(unsigned int, unsigned int);
 	void RenderPicker(float, int);
@@ -56,6 +57,7 @@ public:
 	void CascadeVertexSelection();
 	void Extrude();
 	void Duplicate();
+	void DeleteSelection();
 	void CalculateNormal(int);
 	void AssignIntermediatePointers();
 	void Subdivide(bool);

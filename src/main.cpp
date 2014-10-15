@@ -249,10 +249,16 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	int sp = glutGetModifiers();
 	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
 	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
-
+	printf("key: %i \n",key);
 	switch (key) {
 	case ' ':
 		g_model->Subdivide(true);
+		break;
+	case 3:
+		g_model->Duplicate();
+		break;
+	case 127:
+		g_model->DeleteSelection();
 		break;
 	case 'f':
 		g_model->SetSelectType(PAE3D_SELECT_FACES);
@@ -274,6 +280,9 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 		break;
 	case 'x':
 		g_model->Extrude();
+		break;
+	case 'l':
+		g_model->Merge();
 		break;
 	case 'p':
 		displayMode++;
