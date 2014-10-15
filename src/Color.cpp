@@ -12,6 +12,7 @@ void Move(int, int);
 void leftf();
 void rightf();
 void addf();
+void clip();
 
 PAE3D_Material* mats;
 int matCount;
@@ -110,6 +111,7 @@ void Click(int button, int state, int x, int y) {
 			leftDown = false;
 		}
 	}
+	clip();
 	glutPostRedisplay();
 	repostMain();
 }
@@ -135,8 +137,17 @@ void Move(int x, int y) {
 			mats[cur].shininess = (x - 1) / 2.0;
 		}
 	}
+	clip();
 	glutPostRedisplay();
 	repostMain();
+}
+
+void clip() {
+	mats[cur].col.r = mats[cur].col.r > 1 ? 1 : mats[cur].col.r < 0 ? 0 : mats[cur].col.r;
+	mats[cur].col.g = mats[cur].col.g > 1 ? 1 : mats[cur].col.g < 0 ? 0 : mats[cur].col.g;
+	mats[cur].col.b = mats[cur].col.b > 1 ? 1 : mats[cur].col.b < 0 ? 0 : mats[cur].col.b;
+	mats[cur].specular = mats[cur].specular > 1 ? 1 : mats[cur].specular < 0 ? 0 : mats[cur].specular;
+	mats[cur].shininess = mats[cur].shininess > 128 ? 128 : mats[cur].shininess < 0 ? 0 : mats[cur].shininess;
 }
 
 void leftf() {
