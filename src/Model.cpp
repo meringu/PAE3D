@@ -552,12 +552,11 @@ void Model::DeleteVertex(int index){
 	m_nNumPoint = m_nNumPoint -1;
 }
 void Model::DeleteEdge(int index) {
-	printf("edge del %i %i %i \n",index,m_pEdgeArray[index].v1,m_pEdgeArray[index].v2);
-	//shift
+
 	for (int i = index; i < m_nNumEdge - 1; i++) {
 		m_pEdgeArray[i] = m_pEdgeArray[i + 1];
 	}
-	//reassign poly. Faces with vertcount <3 must be already deleted.
+
 	for (int i = 0; i < m_nNumPolygon; i++) {
 
 		for (int k = 0; k < m_pPolyArray[i].vertexCount; k++) {
@@ -2030,6 +2029,17 @@ void Model::Merge(){
 	int edgeCount = 0;
 	int faceCount = 0;
 	//deselect erroneous
+	for (int i = 0; i < m_nNumPoint; i++) {
+		if (m_pVertexArray[i].selected) {
+			vertCount++;
+		}
+	}
+	if(vertCount <= 1){return;}
+	for (int i = 0; i < m_nNumEdge; i++) {
+		if (m_pEdgeArray[i].selected) {
+			edgeCount++;
+		}
+	}
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
 			faceCount++;
@@ -2047,11 +2057,6 @@ void Model::Merge(){
 		}
 	}
 
-	for (int i = 0; i < m_nNumEdge; i++) {
-		if (m_pEdgeArray[i].selected) {
-				edgeCount++;
-		}
-	}
 	unsigned int* edgesInd = new unsigned int[edgeCount];
 	position = 0;
 
@@ -2063,11 +2068,7 @@ void Model::Merge(){
 		}
 	}
 
-	for (int i = 0; i < m_nNumPoint; i++) {
-		if (m_pVertexArray[i].selected) {
-			vertCount++;
-		}
-	}
+
 	unsigned int* vertsInd = new unsigned int[vertCount];
 	position = 0;
 
