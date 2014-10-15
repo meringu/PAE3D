@@ -240,6 +240,7 @@ void PAE3D_Display() {
 		glDisable(GL_COLOR_MATERIAL);
 		glutSwapBuffers();
 	}
+	g_toolbar->repaint();
 }
 
 void PAE3D_Reshape(int w, int h) {
@@ -271,7 +272,7 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
 
 	switch (key) {
-	case ' ':
+	case 'g':
 		g_model->Subdivide(true);
 		break;
 	case 'f':

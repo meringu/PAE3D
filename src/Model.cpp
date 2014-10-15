@@ -20,6 +20,9 @@ GLUquadric* quadric = gluNewQuadric();
 void Sort(unsigned int* num, int numLength);
 
 Model::Model(char* filename) {
+
+
+
 	m_hasSelected = false;
 	picking = false;
 	m_SelectMode = PAE3D_SELECT_FACES;
@@ -1116,10 +1119,10 @@ void Model::RenderFaces(Color* cols, bool phong) {
 			// cube mapping
 			/*glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);//_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-			glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);*/
-			//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-			//glBindTexture(GL_TEXTURE_2D, cubeMap);
-			/*glEnable(GL_TEXTURE_CUBE_MAP);
+			glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			//glBindTexture(GL_TEXTURE_2D, 1);
+			glEnable(GL_TEXTURE_CUBE_MAP);
 			glEnable(GL_TEXTURE_GEN_S);
 			glEnable(GL_TEXTURE_GEN_T);
 			glEnable(GL_TEXTURE_GEN_R);*/

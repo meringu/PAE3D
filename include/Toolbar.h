@@ -10,5 +10,5 @@ public:
 	~Toolbar(void);
 	void DrawButtons(bool);
 	int getCurrentButton();
-	void stop();
+	void repaint();
 };

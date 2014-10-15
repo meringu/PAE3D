@@ -27,6 +27,11 @@ int (*getParami)(int);
 
 GLuint buttons;
 
+void Toolbar::repaint() {
+	glutSetWindow(barWind);
+	glutPostRedisplay();
+}
+
 Toolbar::Toolbar(void (*i)(int), unsigned int mainWin, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int), int (*pi)(int)) {
 	startId = i;
 	currentButton = 0;
@@ -67,10 +72,6 @@ void BarClick(int button, int state, int x, int y) {
 int Toolbar::getCurrentButton(){
 	int btn = currentButton;
  return btn;
-}
-void Toolbar::stop(){
-	 currentButton = 0;
-	 startId(0);
 }
 
 void BarDisplay() {
