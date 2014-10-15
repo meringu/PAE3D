@@ -20,6 +20,13 @@ GLUquadric* quadric = gluNewQuadric();
 void Sort(unsigned int* num, int numLength);
 
 Model::Model(char* filename) {
+
+
+
+	m_hasSelected = false;
+	picking = false;
+	m_SelectMode = PAE3D_SELECT_FACES;
+	SelectedHandle = PAE3D_HANDLE_MOVE;
 	if (filename == NULL) {
 		SelectedHandle = PAE3D_SELECT_NO_HANDLE;
 		m_SelectMode = PAE3D_SELECT_FACES;
@@ -166,6 +173,12 @@ Model::Model(char* filename) {
 		ReadOBJ(filename);
 	}
 	DeselectEverything();
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		m_pPolyArray[i].n = PolyNormal(i);
+	}
+	for (int i = 0; i < m_nNumPoint; i++) {
+		CalculateNormal(i);
+	}
 }
 
 void Model::ReadOBJ(const char *filename) {
@@ -570,13 +583,28 @@ void Model::DeletePoly(int index){
 }
 
 void Model::Subdivide(bool smooth) {
-	printf("\n\nsmooth: %d\n", m_nNumPolygon);
+	bool timedebug = false;
+	// select all if none selected
+	bool nofaces = true;
+	for (int i = 0; i < m_nNumPolygon; i++) {
+		if (m_pPolyArray[i].selected) {
+			nofaces = false;
+		}
+	}
+	if (nofaces) {
+		SelectAll();
+	}
 	time_t start, end;
+	if (timedebug) {
+		printf("\n\nsmooth: %d\n", m_nNumPolygon);
+		time(&start);
+	}
+
+
 	unsigned int points = m_nNumPoint;
 	unsigned int edges = m_nNumEdge;
 	unsigned int polys = m_nNumPolygon;
 
-	time(&start);
 	// finding face points
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
@@ -588,9 +616,11 @@ void Model::Subdivide(bool smooth) {
 			AddVertex(p);
 		}
 	}
-	time(&end);
-	printf("finding face points: %f\n", difftime(start, end));
-	time(&start);
+	if (timedebug) {
+		time(&end);
+		printf("finding face points: %f\n", difftime(start, end));
+		time(&start);
+	}
 	// finding edge points
 	for (int i = 0; i < m_nNumEdge; i++) {
 		if (m_pEdgeArray[i].selected) {
@@ -639,9 +669,11 @@ void Model::Subdivide(bool smooth) {
 			}
 		}
 	}
-	printf("finding edge points: %f\n", difftime(start, end));
-
-	time(&start);
+	if (timedebug) {
+		time(&end);
+		printf("finding edge points: %f\n", difftime(start, end));
+		time(&start);
+	}
 	// joining face points to edge points
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		if (m_pPolyArray[i].selected) {
@@ -673,9 +705,12 @@ void Model::Subdivide(bool smooth) {
 			}
 		}
 	}
-	printf("joining face points to edge points: %f\n", difftime(start, end));
+	if (timedebug) {
+		time(&end);
+		printf("joining face points to edge points: %f\n", difftime(start, end));
+		time(&start);
+	}
 
-	time(&start);
 	// adjusting original point positions
 	if (smooth) {
 		for (unsigned int i = 0; i < points; i++) {
@@ -735,9 +770,11 @@ void Model::Subdivide(bool smooth) {
 			m_pVertexArray[i].z = (w3 * f.z + w2 * r.z + w1 * m_pVertexArray[i].z) / n;
 		}
 	}
-	printf("adjusting original point positions: %f\n", difftime(start, end));
-
-	time(&start);
+	if (timedebug) {
+		time(&start);
+		printf("adjusting original point positions: %f\n", difftime(start, end));
+		time(&start);
+	}
 	// splitting original edges in half
 	for (unsigned int i = 0; i < edges; i++) {
 		if (m_pEdgeArray[i].selected) {
@@ -798,9 +835,11 @@ void Model::Subdivide(bool smooth) {
 			}
 		}
 	}
-	printf("splitting original edges in half: %f\n", difftime(start, end));
-
-	time(&start);
+	if (timedebug) {
+		time(&start);
+		printf("splitting original edges in half: %f\n", difftime(start, end));
+		time(&start);
+	}
 	// creating new faces
 	for (unsigned int i = 0; i < polys; i++) {
 		if (m_pPolyArray[i].selected) {
@@ -883,9 +922,11 @@ void Model::Subdivide(bool smooth) {
 			delete (oldEdges);
 		}
 	}
-	printf("creating new faces: %f\n", difftime(start, end));
-
-	time(&start);
+	if (timedebug) {
+		time(&start);
+		printf("creating new faces: %f\n", difftime(start, end));
+		time(&start);
+	}
 	// clean dependencies
 	for (int i = 0; i < m_nNumEdge; i++) {
 		m_pEdgeArray[i].hasPoly1 = false;
@@ -922,9 +963,11 @@ void Model::Subdivide(bool smooth) {
 			}
 		}
 	}
-	printf("clean dependencies: %f\n", difftime(start, end));
-
-	time(&start);
+	if (timedebug ) {
+		time(&start);
+		printf("clean dependencies: %f\n", difftime(start, end));
+		time(&start);
+	}
 	// compute normals
 	for (int i = 0; i < m_nNumPoint; i++) {
 		Sort(m_pVertexArray[i].edges, m_pVertexArray[i].edgeCount);
@@ -936,9 +979,14 @@ void Model::Subdivide(bool smooth) {
 	for (int i = 0; i < m_nNumPoint; i++) {
 		CalculateNormal(i);
 	}
+	if (timedebug) {
+		printf("compute normals: %f\n", difftime(start, end));
+		printf("done: %d\n\n\n", m_nNumPolygon);
+	}
 
-	printf("compute normals: %f\n", difftime(start, end));
-	printf("done: %d\n\n\n", m_nNumPolygon);
+	if (nofaces) {
+		DeselectEverything();
+	}
 }
 
 void Sort(unsigned int* num, int numLength) {
@@ -1074,64 +1122,27 @@ void Model::RenderVertices(float zoom) {
 void Model::RenderEdges(float zoom) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	for (int i = 0; i < m_nNumEdge; i++) {
-		if(picking){
+		if (picking) {
 			int id = i + PAE3D_COLORPADDING;
 			int r = (id & 0x000000FF) >> 0;
 			int g = (id & 0x0000FF00) >> 8;
 			int b = (id & 0x00FF0000) >> 16;
-			glColor3f(r/255.0, g/255.0, b/255.0);
-		}
-		else if (m_hasSelected && m_pEdgeArray[i].selected) {
+			glColor3f(r / 255.0, g / 255.0, b / 255.0);
+			glLineWidth(6);
+		} else if (m_hasSelected && m_pEdgeArray[i].selected) {
 			glColor3f(1.0, 0.0, 0.0);
-		}
-		else {
+			glLineWidth(2);
+		} else {
 			glColor3f(0, 0, 0);
+			glLineWidth(2);
 		}
 		PAE3D_Edge edge = m_pEdgeArray[i];
 		PAE3D_Point p1 = m_pVertexArray[edge.v1];
 		PAE3D_Point p2 = m_pVertexArray[edge.v2];
-		if(picking){
-		if (p1.z < p2.z) {
-			PAE3D_Point tempP = p1;
-			p1 = p2;
-			p2 = tempP;
-		}
-		glPushMatrix();
-		glTranslatef(p2.x, p2.y, p2.z);
-		float length = sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y)+(p1.z-p2.z)*(p1.z-p2.z));
-		PAE3D_Point t;
-		PAE3D_Point v1;
-		PAE3D_Point v2;
-		v1.x = 0;
-		v1.y = 0;
-		v1.z = 1;
-		v2.x = (p1.x - p2.x)/length;
-		v2.y = (p1.y - p2.y)/length;
-		v2.z = (p1.z - p2.z)/length;
-		float dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-		float crossX = v1.y * v2.x - v2.y * v1.z;
-		float crossY = (v1.z * v2.x - v2.z * v1.x);
-		float crossZ = v1.x * v2.y - v2.x * v1.y;
-		t.x = crossX;
-		t.y = crossY;
-		t.z = crossZ;
-		float tLength = sqrt(t.x*t.x+t.y*t.y+t.z*t.z);
-		t.x /= tLength;
-		t.y /= tLength;
-		t.z /= tLength;
-		float angle = acos(dot);
-		angle = angle * 180 / M_PI;
-		glRotatef(angle, t.x, t.y, t.z);
-		gluCylinder(quadric, 0.5 / height * zoom, 0.5 / height * zoom, length, 4, 1);
-		glPopMatrix();
-		}
-		else {
-			glLineWidth(2);
-			glBegin(GL_LINES);
-			glVertex3f(p1.x, p1.y, p1.z);
-			glVertex3f(p2.x, p2.y, p2.z);
-			glEnd();
-		}
+		glBegin(GL_LINES);
+		glVertex3f(p1.x, p1.y, p1.z);
+		glVertex3f(p2.x, p2.y, p2.z);
+		glEnd();
 	}
 }
 
@@ -1156,10 +1167,10 @@ void Model::RenderFaces(Color* cols, bool phong) {
 			// cube mapping
 			/*glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);//_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-			glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);*/
-			//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-			//glBindTexture(GL_TEXTURE_2D, cubeMap);
-			/*glEnable(GL_TEXTURE_CUBE_MAP);
+			glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			//glBindTexture(GL_TEXTURE_2D, 1);
+			glEnable(GL_TEXTURE_CUBE_MAP);
 			glEnable(GL_TEXTURE_GEN_S);
 			glEnable(GL_TEXTURE_GEN_T);
 			glEnable(GL_TEXTURE_GEN_R);*/
@@ -1185,6 +1196,10 @@ void Model::RenderFaces(Color* cols, bool phong) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+
+			delete(ambient);
+			delete(diffuse);
+			delete(specular);
 		} else {
 			GLfloat* specular = new GLfloat[4];
 			specular[0] = 0;
@@ -1244,7 +1259,7 @@ void Model::RenderPicker(float zoom, int handleMode) {
 		glPushMatrix();
 			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
 			switch(handleMode){
-			case PAE3D_HANLE_MOVE:
+			case PAE3D_HANDLE_MOVE:
 				glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
 				Handle::RenderXHandleMove(quadric, width, length);
 				glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
@@ -1252,7 +1267,7 @@ void Model::RenderPicker(float zoom, int handleMode) {
 				glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
 				Handle::RenderZHandleMove(quadric, width, length);
 				break;
-			case PAE3D_HANLE_SCALE:
+			case PAE3D_HANDLE_SCALE:
 				glColor3f(PAE3D_SELECT_X_HANDLE / 255.0, 0, 0);
 				Handle::RenderXHandleScale(quadric, width, length);
 				glColor3f(PAE3D_SELECT_Y_HANDLE / 255.0, 0, 0);
@@ -1291,7 +1306,7 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool leftClic
 	}
 	switch (m_SelectMode) {
 	case PAE3D_SELECT_FACES:
-		if (id < m_nNumPolygon && !leftClick) {
+		if (id >=0 && id < m_nNumPolygon && !leftClick) {
 			if (m_pPolyArray[id].selected) {
 				if (shift) {
 					/*deselects face from group*/
@@ -1331,7 +1346,7 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool leftClic
 		}
 		break;
 	case PAE3D_SELECT_EDGES:
-		if (id < m_nNumEdge && !leftClick) {
+		if (id >= 0 && id < m_nNumEdge && !leftClick) {
 			if (m_pEdgeArray[id].selected) {
 				if (shift) {
 					m_pEdgeArray[id].selected = false;
@@ -1373,7 +1388,7 @@ void Model::ProcessSelection(int cursorX, int cursorY, bool shift, bool leftClic
 		break;
 
 	case PAE3D_SELECT_VERTICES:
-		if (id < m_nNumPoint && !leftClick) {
+		if (id >= 0 && id < m_nNumPoint && !leftClick) {
 			if (m_pVertexArray[id].selected) {
 				if (shift) {
 					/*deselects face from group*/
@@ -1455,7 +1470,7 @@ void Model::RenderSelectedFacesHandle(float zoom, int handleMode) {
 		float length = 20.0/height* zoom;
 		glPushMatrix();
 			switch(handleMode) {
-			case PAE3D_HANLE_MOVE:
+			case PAE3D_HANDLE_MOVE:
 				glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
 				glColor3f(1, 0, 0);
 				Handle::RenderXHandleMove(quadric, width, length);
@@ -1464,7 +1479,7 @@ void Model::RenderSelectedFacesHandle(float zoom, int handleMode) {
 				glColor3f(0, 0, 1);
 				Handle::RenderZHandleMove(quadric, width, length);
 				break;
-			case PAE3D_HANLE_SCALE:
+			case PAE3D_HANDLE_SCALE:
 				glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
 				glColor3f(1, 0, 0);
 				Handle::RenderXHandleScale(quadric, width, length);
@@ -2133,14 +2148,3 @@ void Model::Merge(){
 	delete(facesInd);
 
 }
-
-
-
-
-
-
-
-
-
-
-

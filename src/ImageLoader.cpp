@@ -11,11 +11,7 @@ GLuint openTexture(const char* filename) {
 		}
 	}
 	char* ncs = new char[i+5];
-	unsigned int j = 0;
-	do {
-		ncs[j] = filename[j];
-		j++;
-	} while (filename[j] != '\0');
+	strcpy(ncs, filename);
 	char extension[5];
 	strcpy(extension, &filename[i + 1]);
 	if (strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0)
@@ -54,11 +50,7 @@ TextureInfo openTextureInfo(const char* filename) {
 		}
 	}
 	char* ncs = new char[i+5];
-	unsigned int j = 0;
-	do {
-		ncs[j] = filename[j];
-		j++;
-	} while (filename[j] != '\0');
+	strcpy(ncs, filename);
 	char extension[5];
 	strcpy(extension, &filename[i + 1]);
 	if (strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0)
