@@ -1096,13 +1096,15 @@ void Model::RenderVertices(float zoom) {
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	for (int i = 0; i < m_nNumPoint; i++) {
 		float radius = 1;
+		int divs = 4;
 		if(picking){
 			int id = i + PAE3D_COLORPADDING;
 			int r = (id & 0x000000FF) >> 0;
 			int g = (id & 0x0000FF00) >> 8;
 			int b = (id & 0x00FF0000) >> 16;
 			glColor3f(r/255.0, g/255.0, b/255.0);
-			radius = 4;
+			radius = 10;
+			divs = 10;
 		}
 		else if (m_hasSelected && m_pVertexArray[i].selected) {
 			glColor3f(1.0, 0.0, 0.0);
@@ -1113,7 +1115,7 @@ void Model::RenderVertices(float zoom) {
 		PAE3D_Point p = m_pVertexArray[i];
 		glPushMatrix();
 		glTranslatef(p.x, p.y, p.z);
-		glutSolidSphere(radius/height * zoom, 4, 4);
+		glutSolidSphere(radius/height * zoom, divs, divs);
 		glPopMatrix();
 
 	}
