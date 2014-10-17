@@ -143,7 +143,7 @@ void PAE3D_ButtonPushed (int button) {
 			g_model->Extrude();
 			break;
 		case 8:
-			//g_model->merge();
+			g_model->Merge();
 			break;
 		case 9:
 			g_model->Subdivide(false);
