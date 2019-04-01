@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif
 #include <time.h>
 #include "Handle.h"
 #include "ImageLoader.h"

@@ -1,6 +1,13 @@
 CC = g++
 IPATH = -I./include
-LIBS= -lGL -lglut -lGLU -ljpeg -lpng16
+OS:=$(shell uname)
+ifeq ($(OS),Darwin)
+    $(info OS is $(OS))
+    LIBS= -framework GLUT -framework OpenGL -framework Cocoa -ljpeg -lpng16
+endif
+ifeq ($(OS),Linux)
+    LIBS= -lGL -lglut -lGLU -ljpeg -lpng16
+endif
 BUILD = build/
 SRC = src/
 CPP_FILES := $(wildcard src/*.cpp)
