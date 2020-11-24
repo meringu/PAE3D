@@ -373,9 +373,6 @@ void PAE3D_MouseClick(int button, int state, int x, int y){
 }
 
 void PAE3D_MouseMove(int x, int y) {
-	int sp = glutGetModifiers();
-	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
-	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	float worldDX = ((g_lastX-x)*cos(rotation*M_PI/180)+(y-g_lastY)*sin(tilt*M_PI/180)*sin(rotation*M_PI/180))*zoom/height/4;
 	float worldDY = (y-g_lastY)*cos(tilt*M_PI/180)*zoom/height/4;
