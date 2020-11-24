@@ -11,7 +11,6 @@
 #include "Handle.h"
 #include "ImageLoader.h"
 #include "Model.h"
-
 #include <iostream>
 
 using namespace std;
@@ -598,10 +597,10 @@ void Model::Subdivide(bool smooth) {
 	if (nofaces) {
 		SelectAll();
 	}
-	time_t start, end;
+	clock_t start, end;
 	if (timedebug) {
 		printf("\n\nsmooth: %d\n", m_nNumPolygon);
-		time(&start);
+		start = clock();
 	}
 
 
@@ -621,9 +620,9 @@ void Model::Subdivide(bool smooth) {
 		}
 	}
 	if (timedebug) {
-		time(&end);
-		printf("finding face points: %f\n", difftime(start, end));
-		time(&start);
+		end = clock();
+		printf("finding face points: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 	// finding edge points
 	for (int i = 0; i < m_nNumEdge; i++) {
@@ -674,9 +673,9 @@ void Model::Subdivide(bool smooth) {
 		}
 	}
 	if (timedebug) {
-		time(&end);
-		printf("finding edge points: %f\n", difftime(start, end));
-		time(&start);
+		end = clock();
+		printf("finding edge points: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 	// joining face points to edge points
 	for (int i = 0; i < m_nNumPolygon; i++) {
@@ -710,9 +709,9 @@ void Model::Subdivide(bool smooth) {
 		}
 	}
 	if (timedebug) {
-		time(&end);
-		printf("joining face points to edge points: %f\n", difftime(start, end));
-		time(&start);
+		end = clock();
+		printf("joining face points to edge points: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 
 	// adjusting original point positions
@@ -775,9 +774,9 @@ void Model::Subdivide(bool smooth) {
 		}
 	}
 	if (timedebug) {
-		time(&start);
-		printf("adjusting original point positions: %f\n", difftime(start, end));
-		time(&start);
+		end = clock();
+		printf("adjusting original point positions: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 	// splitting original edges in half
 	for (unsigned int i = 0; i < edges; i++) {
@@ -840,9 +839,9 @@ void Model::Subdivide(bool smooth) {
 		}
 	}
 	if (timedebug) {
-		time(&start);
-		printf("splitting original edges in half: %f\n", difftime(start, end));
-		time(&start);
+		end = clock();
+		printf("splitting original edges in half: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 	// creating new faces
 	for (unsigned int i = 0; i < polys; i++) {
@@ -927,9 +926,9 @@ void Model::Subdivide(bool smooth) {
 		}
 	}
 	if (timedebug) {
-		time(&start);
-		printf("creating new faces: %f\n", difftime(start, end));
-		time(&start);
+		end = clock();
+		printf("creating new faces: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 	// clean dependencies
 	for (int i = 0; i < m_nNumEdge; i++) {
@@ -967,10 +966,10 @@ void Model::Subdivide(bool smooth) {
 			}
 		}
 	}
-	if (timedebug ) {
-		time(&start);
-		printf("clean dependencies: %f\n", difftime(start, end));
-		time(&start);
+	if (timedebug) {
+		end = clock();
+		printf("clean dependencies: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+		start = clock();
 	}
 	// compute normals
 	for (int i = 0; i < m_nNumPoint; i++) {
@@ -984,7 +983,8 @@ void Model::Subdivide(bool smooth) {
 		CalculateNormal(i);
 	}
 	if (timedebug) {
-		printf("compute normals: %f\n", difftime(start, end));
+		end = clock();
+		printf("compute normals: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 		printf("done: %d\n\n\n", m_nNumPolygon);
 	}
 
