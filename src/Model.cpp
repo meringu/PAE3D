@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 #ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
@@ -1202,9 +1203,9 @@ void Model::RenderFaces(Color* cols, bool phong) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 
-			delete(ambient);
-			delete(diffuse);
-			delete(specular);
+			delete[](ambient);
+			delete[](diffuse);
+			delete[](specular);
 		} else {
 			GLfloat* specular = new GLfloat[4];
 			specular[0] = 0;
@@ -1944,11 +1945,11 @@ void Model::Duplicate(){
 	}
 	AssignIntermediatePointers();
 	ResetHandlePosition();
-	delete(tempVertsInd);
-	delete(tempEdgeInd);
-	delete(tempVerts);
-	delete(tempEdges);
-	delete(tempFaces);
+	delete[](tempVertsInd);
+	delete[](tempEdgeInd);
+	delete[](tempVerts);
+	delete[](tempEdges);
+	delete[](tempFaces);
 }
 
 void Model::DeleteSelection(){
@@ -2024,9 +2025,9 @@ void Model::DeleteSelection(){
 
 	AssignIntermediatePointers();
 	ResetHandlePosition();
-	delete(tempVertsInd);
-	delete(tempEdgeInd);
-	delete(tempFaceInd);
+	delete[](tempVertsInd);
+	delete[](tempEdgeInd);
+	delete[](tempFaceInd);
 }
 
 
@@ -2154,8 +2155,8 @@ void Model::Merge(){
 
 	AssignIntermediatePointers();
 	ResetHandlePosition();
-	delete(vertsInd);
-	delete(edgesInd);
-	delete(facesInd);
+	delete[](vertsInd);
+	delete[](edgesInd);
+	delete[](facesInd);
 
 }

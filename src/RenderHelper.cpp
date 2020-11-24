@@ -1,3 +1,6 @@
+#ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
+#endif
 #include "RenderHelper.h"
 
 void PAE3D_RenderSkyBox(GLuint xp, GLuint xn, GLuint yp, GLuint yn, GLuint zp, GLuint zn) {

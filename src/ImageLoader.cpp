@@ -37,7 +37,7 @@ GLuint openTexture(const char* filename) {
 		GL_UNSIGNED_BYTE, t.textureData);
 	}
 	free(t.textureData);
-	delete(ncs);
+	delete[](ncs);
 	return texName;
 }
 
@@ -61,7 +61,7 @@ TextureInfo openTextureInfo(const char* filename) {
 		printf("Invalid format. Only supports JPEG and PNG.\n");
 		exit(1);
 	}
-	delete(ncs);
+	delete[](ncs);
 	return t;
 }
 

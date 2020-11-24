@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
@@ -65,14 +66,14 @@ int main(int argc, char** argv) {
 	char* file = NULL;
 	if (argc > 1) {
 		if (argc != 3) {
-			printf(usage);
+			printf("%s", usage);
 			exit(0);
 		}
 		if (strcmp(argv[1], "-o") == 0) {
 			file = argv[2];
 		}
 		else {
-			printf(usage);
+			printf("%s", usage);
 			exit(0);
 		}
 	}
