@@ -24,9 +24,6 @@ GLUquadric* quadric = gluNewQuadric();
 void Sort(unsigned int* num, int numLength);
 
 Model::Model(char* filename) {
-
-
-
 	m_hasSelected = false;
 	picking = false;
 	m_SelectMode = PAE3D_SELECT_FACES;
@@ -599,7 +596,7 @@ void Model::Subdivide(bool smooth) {
 	}
 	clock_t start, end;
 	if (timedebug) {
-		printf("\n\nsmooth: %d\n", m_nNumPolygon);
+		printf("smooth: %d\n", m_nNumPolygon);
 		start = clock();
 	}
 
@@ -721,25 +718,57 @@ void Model::Subdivide(bool smooth) {
 			f.x = 0;
 			f.y = 0;
 			f.z = 0;
+
+
 			int neighboringPolys = 0;
-			for (int j = 0; j < m_nNumPolygon; j++) {
-				bool touches = false;
-				for (int k = 0; k < m_pPolyArray[j].vertexCount; k++) {
-					if (m_pPolyArray[j].vertices[k] == i) {
-						touches = true;
+
+			unsigned int* neighboringPolysList = new unsigned int[m_pVertexArray[i].edgeCount*2]; // There is a upper limit of two faces per edge
+
+			for (int j = 0; j < m_pVertexArray[i].edgeCount; j++) {
+				if (m_pEdgeArray[m_pVertexArray[i].edges[j]].hasPoly1) {
+					bool isVisited = false;
+					for (int k = 0; k < neighboringPolys; k++) {
+						if (neighboringPolysList[k] == m_pEdgeArray[m_pVertexArray[i].edges[j]].poly1) {
+							isVisited = true;
+							continue;
+						}
+					}
+
+					if (!isVisited) {
+						PAE3D_Point c = PolyCenter(m_pEdgeArray[m_pVertexArray[i].edges[j]].poly1);
+						f.x += c.x;
+						f.y += c.y;
+						f.z += c.z;
+						neighboringPolysList[neighboringPolys] = m_pEdgeArray[m_pVertexArray[i].edges[j]].poly1;
+						neighboringPolys++;
 					}
 				}
-				if (touches) {
-					PAE3D_Point c = PolyCenter(j);
-					f.x += c.x;
-					f.y += c.y;
-					f.z += c.z;
-					neighboringPolys++;
+
+				if (m_pEdgeArray[m_pVertexArray[i].edges[j]].hasPoly2) {
+					bool isVisited = false;
+					for (int k = 0; k < neighboringPolys; k++) {
+						if (neighboringPolysList[k] == m_pEdgeArray[m_pVertexArray[i].edges[j]].poly2) {
+							isVisited = true;
+							continue;
+						}
+					}
+
+					if (!isVisited) {
+						PAE3D_Point c = PolyCenter(m_pEdgeArray[m_pVertexArray[i].edges[j]].poly2);
+						f.x += c.x;
+						f.y += c.y;
+						f.z += c.z;
+						neighboringPolysList[neighboringPolys] = m_pEdgeArray[m_pVertexArray[i].edges[j]].poly2;
+						neighboringPolys++;
+					}
 				}
 			}
+
 			if (neighboringPolys == 0) {
 				continue;
 			}
+
+
 			f.x /= neighboringPolys;
 			f.y /= neighboringPolys;
 			f.z /= neighboringPolys;
@@ -748,16 +777,17 @@ void Model::Subdivide(bool smooth) {
 			r.y = 0;
 			r.z = 0;
 			int neighboringEdges = 0;
-			for (int j = 0; j < m_nNumEdge; j++) {
-				if (m_pEdgeArray[j].selected) {
-					if (m_pEdgeArray[j].v1 == i || m_pEdgeArray[j].v2 == i) {
-						r.x += m_pVertexArray[m_pEdgeArray[j].c].x;
-						r.y += m_pVertexArray[m_pEdgeArray[j].c].y;
-						r.z += m_pVertexArray[m_pEdgeArray[j].c].z;
-						neighboringEdges++;
-					}
+
+			for (int j = 0; j < m_pVertexArray[i].edgeCount; j++) {
+				if (m_pEdgeArray[m_pVertexArray[i].edges[j]].selected) {
+					r.x += m_pVertexArray[m_pEdgeArray[m_pVertexArray[i].edges[j]].c].x;
+					r.y += m_pVertexArray[m_pEdgeArray[m_pVertexArray[i].edges[j]].c].y;
+					r.z += m_pVertexArray[m_pEdgeArray[m_pVertexArray[i].edges[j]].c].z;
+					neighboringEdges++;
 				}
 			}
+
+
 			if (neighboringEdges == 0) {
 				continue;
 			}
@@ -985,7 +1015,7 @@ void Model::Subdivide(bool smooth) {
 	if (timedebug) {
 		end = clock();
 		printf("compute normals: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
-		printf("done: %d\n\n\n", m_nNumPolygon);
+		printf("done: %d\n\n", m_nNumPolygon);
 	}
 
 	if (nofaces) {
