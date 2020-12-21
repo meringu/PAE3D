@@ -1,20 +1,22 @@
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif
-#include <math.h>
+
+#include <assert.h>
 #include <iostream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "define.h"
-#include "Model.h"
-#include "ImageLoader.h"
 #include "Color.h"
-#include "Toolbar.h"
+#include "ImageLoader.h"
+#include "Model.h"
 #include "RenderHelper.h"
+#include "Toolbar.h"
 
 using namespace std;
 
@@ -61,6 +63,7 @@ void PAE3D_RepostMain();
 void PAE3D_ButtonPushed(int);
 int getParami(int);
 
+
 int main(int argc, char** argv) {
 	const char* usage = "Usage: PAE3D [option]\n\nOption\t\tMeaning\n --help\t\tShow this message\n -o <file>\tLoad .obj file\n\t\tLoad default cube\n";
 	char* file = NULL;
@@ -77,6 +80,7 @@ int main(int argc, char** argv) {
 			exit(0);
 		}
 	}
+
 	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);

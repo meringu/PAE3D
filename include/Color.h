@@ -1,7 +1,5 @@
 #pragma once
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
+
 #include "define.h"
 
 class Color {

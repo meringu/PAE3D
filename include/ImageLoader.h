@@ -6,12 +6,6 @@
 #else
 #include <GL/glut.h>
 #endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <jpeglib.h>
-#include <jerror.h>
-#include <png.h>
-#include "string.h"
 
 #define png_infopp_NULL (png_infopp)NULL
 #define int_p_NULL (int*)NULL
@@ -28,9 +22,6 @@ typedef struct texInfo {
 	int height;
 	bool hasAlpha;
 } TextureInfo;
-
-//static GLuint cubeMap;
-
 
 int loadTextureFromJPEG(char*,TextureInfo*);
 int loadTextureFromPNG(char*, TextureInfo*);

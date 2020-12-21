@@ -1,17 +1,20 @@
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include "Model.h"
+
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif
+
+#include <iostream>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
+
 #include "Handle.h"
 #include "ImageLoader.h"
-#include "Model.h"
-#include <iostream>
 
 using namespace std;
 

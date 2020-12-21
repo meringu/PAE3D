@@ -1,7 +1,15 @@
+#include "RenderHelper.h"
+
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
 #endif
-#include "RenderHelper.h"
+
+#include <math.h>
+
+#include "Model.h"
 
 void PAE3D_RenderSkyBox(GLuint xp, GLuint xn, GLuint yp, GLuint yn, GLuint zp, GLuint zn) {
 	glEnable(GL_TEXTURE_2D);

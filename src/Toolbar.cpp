@@ -1,12 +1,16 @@
 #include "Toolbar.h"
+
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif
+
 #include <stdio.h>
 #include <math.h>
+
+#include "define.h"
 #include "ImageLoader.h"
 
 using namespace std;

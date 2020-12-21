@@ -1,5 +1,19 @@
 #include "ImageLoader.h"
+
+#ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
 #include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <jerror.h>
+#include <jpeglib.h>
+#include <png.h>
+
 
 GLuint openTexture(const char* filename) {
 	GLuint texName;
