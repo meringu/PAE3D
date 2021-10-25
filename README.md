@@ -87,8 +87,8 @@ Install dependencies (apt):
 ```
 apt-get install \
   build-essential \
-  freeglut3-dev \
-  libjpeg-dev libpng-dev
+  libsdl2-dev \
+  libsdl2-image-dev
 ```
 
 Build
@@ -100,5 +100,5 @@ make
 Run
 
 ```
-./build/PAE3D
+./build/Linux/PAE3D
 ```

@@ -313,8 +313,8 @@ void PAE3D_Display() {
 		glDisable(GL_COLOR_MATERIAL);
 		// glutSwapBuffers();
 	}
-	// g_toolbar->Display(g_nWinWidth / g_dpiScaling, g_nWinHeight / g_dpiScaling);
-	// g_color->Display(g_nWinWidth / g_dpiScaling, g_nWinHeight / g_dpiScaling);
+	g_toolbar->Display(g_nWinWidth / g_dpiScaling, g_nWinHeight / g_dpiScaling);
+	g_color->Display(g_nWinWidth / g_dpiScaling, g_nWinHeight / g_dpiScaling);
 }
 
 void PAE3D_KeyboardDown(SDL_Keycode key) {
@@ -393,7 +393,6 @@ void PAE3D_KeyboardUp(SDL_Keycode key) {
 }
 
 void PAE3D_MouseClick(int button, int state, int x, int y) {
-	printf("%d x %d\n", x, y);
 	g_lastX = x;
 	g_lastY = y;
 	if (g_toolbar->Click(button, state, x, y, g_nWinWidth, g_nWinHeight)) {
