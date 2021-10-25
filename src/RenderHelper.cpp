@@ -1,15 +1,15 @@
 #include "RenderHelper.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #define GL_SILENCE_DEPRECATION
-#include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #else
-#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #include <math.h>
-
-#include "Model.h"
 
 void PAE3D_RenderSkyBox(GLuint xp, GLuint xn, GLuint yp, GLuint yn, GLuint zp, GLuint zn) {
 	glEnable(GL_TEXTURE_2D);
@@ -19,75 +19,75 @@ void PAE3D_RenderSkyBox(GLuint xp, GLuint xn, GLuint yp, GLuint yn, GLuint zp, G
 	float c = 0.001; // move faces closer by a 10th of a pixel to remove artifacts at seams
 
 	glBindTexture(GL_TEXTURE_2D, xp);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(1 - c, -1, -1);
+	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, 1);
+	glVertex3f(1 - c, -1, -1);
+	glTexCoord2f(0, 0);
 	glVertex3f(1 - c, 1, -1);
 	glTexCoord2f(1, 1);
-	glVertex3f(1 - c, 1, 1);
-	glTexCoord2f(1, 0);
 	glVertex3f(1 - c, -1, 1);
+	glTexCoord2f(1, 0);
+	glVertex3f(1 - c, 1, 1);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, xn);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(c - 1, -1, 1);
+	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, 1);
+	glVertex3f(c - 1, -1, 1);
+	glTexCoord2f(0, 0);
 	glVertex3f(c - 1, 1, 1);
 	glTexCoord2f(1, 1);
-	glVertex3f(c - 1, 1, -1);
-	glTexCoord2f(1, 0);
 	glVertex3f(c - 1, -1, -1);
+	glTexCoord2f(1, 0);
+	glVertex3f(c - 1, 1, -1);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, zp);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(1, -1, 1 - c);
+	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, 1);
+	glVertex3f(1, -1, 1 - c);
+	glTexCoord2f(0, 0);
 	glVertex3f(1, 1, 1 - c);
 	glTexCoord2f(1, 1);
-	glVertex3f(-1, 1, 1 - c);
-	glTexCoord2f(1, 0);
 	glVertex3f(-1, -1, 1 - c);
+	glTexCoord2f(1, 0);
+	glVertex3f(-1, 1, 1 - c);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, zn);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(-1, -1, c - 1);
+	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, 1);
+	glVertex3f(-1, -1, c - 1);
+	glTexCoord2f(0, 0);
 	glVertex3f(-1, 1, c - 1);
 	glTexCoord2f(1, 1);
-	glVertex3f(1, 1, c - 1);
-	glTexCoord2f(1, 0);
 	glVertex3f(1, -1, c - 1);
+	glTexCoord2f(1, 0);
+	glVertex3f(1, 1, c - 1);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, yp);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(1, 1 - c, 1);
+	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, 1);
+	glVertex3f(1, 1 - c, 1);
+	glTexCoord2f(0, 0);
 	glVertex3f(1, 1 - c, -1);
 	glTexCoord2f(1, 1);
-	glVertex3f(-1, 1 - c, -1);
-	glTexCoord2f(1, 0);
 	glVertex3f(-1, 1 - c, 1);
+	glTexCoord2f(1, 0);
+	glVertex3f(-1, 1 - c, -1);
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, yn);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(1, c - 1, -1);
+	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, 1);
+	glVertex3f(1, c - 1, -1);
+	glTexCoord2f(0, 0);
 	glVertex3f(1, c - 1, 1);
 	glTexCoord2f(1, 1);
-	glVertex3f(-1, c - 1, 1);
-	glTexCoord2f(1, 0);
 	glVertex3f(-1, c - 1, -1);
+	glTexCoord2f(1, 0);
+	glVertex3f(-1, c - 1, 1);
 	glEnd();
 
 	glDisable(GL_TEXTURE_2D);

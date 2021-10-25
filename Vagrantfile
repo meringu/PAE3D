@@ -9,9 +9,11 @@ Vagrant.configure('2') do |config|
                       inline: <<SCRIPT
 #!/bin/bash -e
 apt-get update
-apt-get install -y build-essential \
-  freeglut3-dev \
-  libjpeg-dev libpng-dev \
-  lxqt-core sddm # Might need to do a `vagrant reload` afterwards to get the UI to load
+apt-get install -y \
+  build-essential \
+  mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev \
+  libsdl2-dev libsdl2-image-dev \
+  lxqt-core sddm
 SCRIPT
+  config.vm.provision :reload # May need to `vagrant plugin install vagrant-reload` first.
 end

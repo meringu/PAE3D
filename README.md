@@ -75,4 +75,7 @@ Top toolbar buttons have short cut keys written on them; They work as follows.
 
 ## Vagrant
 
-A Vagrantfile is provided for testing on Linux.
+A Vagrantfile is provided for testing on Linux from another host OS.
+
+    vagrant plugin install vagrant-reload
+    vagrant up

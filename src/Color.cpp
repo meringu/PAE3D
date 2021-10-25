@@ -1,10 +1,12 @@
 #include "Color.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #define GL_SILENCE_DEPRECATION
-#include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #else
-#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #include <stdio.h>
@@ -13,10 +15,14 @@
 
 using namespace std;
 
-void (*repostMain)(void);
-void Display(void);
-void Click(int, int, int, int);
-void Move(int, int);
+#define BUTTON_PIXELS 32.0f
+#define COLOR_HEIGHT 10.0f * BUTTON_PIXELS
+#define COLOR_WIDTH  8.0f * BUTTON_PIXELS
+
+// void (*repostMain)(void);
+// void Display(void);
+// void Click(int, int, int, int);
+// void Move(int, int);
 void leftf();
 void rightf();
 void addf();
@@ -37,11 +43,7 @@ GLuint add;
 GLuint leftArrow;
 GLuint rightArrow;
 
-
-Color::Color(void (*r)(void), unsigned int mainWin, unsigned int height, void (*d) (unsigned char, int,int), void (*u) (unsigned char, int,int)) {
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	wind = glutCreateSubWindow(mainWin,0,height -6*32,255,6*32);
-	repostMain = r;
+Color::Color(void (*d) (SDL_Keycode), void (*u) (SDL_Keycode)) {
 	matCount = 1;
 	mats = new PAE3D_Material[matCount];
 	PAE3D_Material mat;
@@ -59,12 +61,6 @@ Color::Color(void (*r)(void), unsigned int mainWin, unsigned int height, void (*
 	add = openTexture("textures/add.png");
 	leftArrow = openTexture("textures/leftarrow.png");
 	rightArrow = openTexture("textures/rightarrow.png");
-	glutDisplayFunc(Display);
-	glutMouseFunc(Click);
-	glutMotionFunc(Move);
-	glutKeyboardFunc(d);
-	glutKeyboardUpFunc(u);
-	glClearColor(1, 1, 1, 1);
 }
 
 Color::~Color() {
@@ -77,22 +73,15 @@ PAE3D_Material* Color::GetMaterial(int i) {
 	return &mats[i];
 }
 
-void Color::Resize(int width, int height) {
-	(void)width;
-	glutSetWindow(wind);
-	glutPositionWindow (0, height-6*32);
-}
-
 int Color::GetCurrentMaterial() {
 	return cur;
 }
 
-void Click(int button, int state, int x, int y) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
+void Click(int button, int state, int x, int y, int width, int height) {
 	float newy = y * 6.0/10;
 	float percY = -(newy / (height / 2.0) - 1);
-	if (button == GLUT_LEFT_BUTTON) {
-		if (state == GLUT_DOWN) {
+	if (button == SDL_BUTTON_LEFT) {
+		if (state == SDL_PRESSED) {
 			leftDown = true;
 			if (percY > 0.8) {
 				mats[cur].col.r = (x - 1) / 256.0;
@@ -119,14 +108,10 @@ void Click(int button, int state, int x, int y) {
 			leftDown = false;
 		}
 	}
-	clip();
-	glutPostRedisplay();
-	repostMain();
 }
 
-void Move(int x, int y) {
+void Move(int x, int y, int width, int height) {
 	float newy = y * 6.0/10;
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
 	float percY = -(newy / (height / 2.0) - 1);
 	if (leftDown) {
 		if (percY > 0.8) {
@@ -145,9 +130,6 @@ void Move(int x, int y) {
 			mats[cur].shininess = (x - 1) / 2.0;
 		}
 	}
-	clip();
-	glutPostRedisplay();
-	repostMain();
 }
 
 void clip() {
@@ -182,11 +164,25 @@ void addf() {
 	matCount++;
 }
 
-void Display() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void Color::Display(int x, int y) {
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glMatrixMode(GL_COLOR);
+	glLoadIdentity();
+
 	glPushMatrix();
-	glScalef(1, 10.0/6.0, 1);
-	glTranslatef(0, -0.4, 0);
+	glMatrixMode(GL_MODELVIEW);
+
+
+	glTranslatef(COLOR_WIDTH / x - 1.0f, COLOR_HEIGHT / y - 1.0f, 0.0f);
+	glScalef(COLOR_WIDTH / x, - COLOR_HEIGHT / y, 1.0f);
+	
 
 	glEnable(GL_COLOR_MATERIAL);
 
@@ -372,6 +368,5 @@ void Display() {
 
 	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
-	glutSwapBuffers();
 }
 

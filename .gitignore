@@ -3,3 +3,4 @@ build/
 .project
 .settings/
 .vagrant/
+.DS_Store

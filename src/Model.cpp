@@ -1,10 +1,12 @@
 #include "Model.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #define GL_SILENCE_DEPRECATION
-#include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #else
-#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #include <iostream>
@@ -14,6 +16,7 @@
 #include <time.h>
 
 #include "Handle.h"
+#include "Color.h"
 #include "ImageLoader.h"
 
 using namespace std;
@@ -330,11 +333,6 @@ void Model::ReadOBJ(const char *filename) {
 	for (int i = 0; i < m_nNumPolygon; i++) {
 		m_pPolyArray[i].n = PolyNormal(i);
 	}
-
-	/*for (int i = 0; i < m_nNumPoint; i++) {
-		printf("%d\n", i);
-		CalculateNormal(i);
-	}*/
 
 	PAE3D_Edge* temp = new PAE3D_Edge[m_nNumEdge];
 	for (int i = 0; i < m_nNumEdge; i++) {
@@ -1129,37 +1127,43 @@ int Model::FindEdge(unsigned int v1, unsigned  int v2) {
 	return -1;
 }
 
-void Model::RenderVertices(float zoom) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
-	for (int i = 0; i < m_nNumPoint; i++) {
-		float radius = 1;
-		int divs = 4;
-		if(picking){
-			int id = i + PAE3D_COLORPADDING;
-			int r = (id & 0x000000FF) >> 0;
-			int g = (id & 0x0000FF00) >> 8;
-			int b = (id & 0x00FF0000) >> 16;
-			glColor3f(r/255.0, g/255.0, b/255.0);
-			radius = 10;
-			divs = 10;
-		}
-		else if (m_hasSelected && m_pVertexArray[i].selected) {
-			glColor3f(1.0, 0.0, 0.0);
-		}
-		else {
-			glColor3f(0, 0, 0);
-		}
-		PAE3D_Point p = m_pVertexArray[i];
-		glPushMatrix();
-		glTranslatef(p.x, p.y, p.z);
-		glutSolidSphere(radius/height * zoom, divs, divs);
-		glPopMatrix();
-
-	}
+void Model::RenderVertices(float zoom, int width, int height) {
+	// for (int i = 0; i < m_nNumPoint; i++) {
+	// 	float radius = 1;
+	// 	int divs = 4;
+	// 	if(picking){
+	// 		int id = i + PAE3D_COLORPADDING;
+	// 		int r = (id & 0x000000FF) >> 0;
+	// 		int g = (id & 0x0000FF00) >> 8;
+	// 		int b = (id & 0x00FF0000) >> 16;
+	// 		glColor3f(r/255.0, g/255.0, b/255.0);
+	// 		radius = 10;
+	// 		divs = 10;
+	// 	}
+	// 	else if (m_hasSelected && m_pVertexArray[i].selected) {
+	// 		glColor3f(1.0, 0.0, 0.0);
+	// 	}
+	// 	else {
+	// 		glColor3f(0, 0, 0);
+	// 	}
+	// 	PAE3D_Point p = m_pVertexArray[i];
+	// 	glPushMatrix();
+	// 	glTranslatef(p.x, p.y, p.z);
+	// 	// TODO: replace this with native GL
+	// 	// glutSolidSphere(radius/height * zoom, divs, divs);
+	// 	glPopMatrix();
+	// }
 }
 
-void Model::RenderEdges(float zoom) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
+void Model::RenderEdges(float zoom, int width, int height) {
+	bool lastSelected = false;
+	if (picking) {
+		glLineWidth(6);
+	} else {
+		glLineWidth(2);
+		glColor3f(0, 0, 0);
+	}
+	glBegin(GL_LINES);
 	for (int i = 0; i < m_nNumEdge; i++) {
 		if (picking) {
 			int id = i + PAE3D_COLORPADDING;
@@ -1167,22 +1171,24 @@ void Model::RenderEdges(float zoom) {
 			int g = (id & 0x0000FF00) >> 8;
 			int b = (id & 0x00FF0000) >> 16;
 			glColor3f(r / 255.0, g / 255.0, b / 255.0);
-			glLineWidth(6);
 		} else if (m_hasSelected && m_pEdgeArray[i].selected) {
-			glColor3f(1.0, 0.0, 0.0);
-			glLineWidth(2);
+			if (!lastSelected) {
+				glColor3f(1.0, 0.0, 0.0);
+				lastSelected = true;
+			}
 		} else {
-			glColor3f(0, 0, 0);
-			glLineWidth(2);
+			if (lastSelected) {
+				glColor3f(0, 0, 0);
+				lastSelected = false;
+			}
 		}
 		PAE3D_Edge edge = m_pEdgeArray[i];
 		PAE3D_Point p1 = m_pVertexArray[edge.v1];
 		PAE3D_Point p2 = m_pVertexArray[edge.v2];
-		glBegin(GL_LINES);
 		glVertex3f(p1.x, p1.y, p1.z);
 		glVertex3f(p2.x, p2.y, p2.z);
-		glEnd();
 	}
+	glEnd();
 }
 
 void Model::RenderFaces(Color* cols, bool phong) {
@@ -1277,18 +1283,17 @@ void Model::RenderFaces(Color* cols, bool phong) {
 	}
 }
 
-void Model::RenderPicker(float zoom, int handleMode) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
+void Model::RenderPicker(float zoom, int width, int height, int handleMode) {
 	picking = true;
 	switch (m_SelectMode) {
 	case PAE3D_SELECT_FACES:
 		RenderFaces(NULL, false);
 		break;
 	case PAE3D_SELECT_EDGES:
-		RenderEdges(zoom);
+		RenderEdges(zoom, width, height);
 		break;
 	case PAE3D_SELECT_VERTICES:
-		RenderVertices(zoom);
+		RenderVertices(zoom, width, height);
 		break;
 	}
 	if (m_hasSelected) {
@@ -1296,25 +1301,25 @@ void Model::RenderPicker(float zoom, int handleMode) {
 		float width = 0.5 / height * zoom;
 		float length = 20.0 / height * zoom;
 		glPushMatrix();
-			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
-			switch(handleMode){
-			case PAE3D_HANDLE_MOVE:
-				glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
-				Handle::RenderXHandleMove(quadric, width, length);
-				glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
-				Handle::RenderYHandleMove(quadric, width, length);
-				glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
-				Handle::RenderZHandleMove(quadric, width, length);
-				break;
-			case PAE3D_HANDLE_SCALE:
-				glColor3f(PAE3D_SELECT_X_HANDLE / 255.0, 0, 0);
-				Handle::RenderXHandleScale(quadric, width, length);
-				glColor3f(PAE3D_SELECT_Y_HANDLE / 255.0, 0, 0);
-				Handle::RenderYHandleScale(quadric, width, length);
-				glColor3f(PAE3D_SELECT_Z_HANDLE / 255.0, 0, 0);
-				Handle::RenderZHandleScale(quadric, width, length);
-				break;
-			}
+		glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
+		switch(handleMode){
+		case PAE3D_HANDLE_MOVE:
+			glColor3f(PAE3D_SELECT_X_HANDLE/255.0, 0, 0);
+			Handle::RenderXHandleMove(quadric, width, length);
+			glColor3f(PAE3D_SELECT_Y_HANDLE/255.0, 0, 0);
+			Handle::RenderYHandleMove(quadric, width, length);
+			glColor3f(PAE3D_SELECT_Z_HANDLE/255.0, 0, 0);
+			Handle::RenderZHandleMove(quadric, width, length);
+			break;
+		case PAE3D_HANDLE_SCALE:
+			glColor3f(PAE3D_SELECT_X_HANDLE / 255.0, 0, 0);
+			Handle::RenderXHandleScale(quadric, width, length);
+			glColor3f(PAE3D_SELECT_Y_HANDLE / 255.0, 0, 0);
+			Handle::RenderYHandleScale(quadric, width, length);
+			glColor3f(PAE3D_SELECT_Z_HANDLE / 255.0, 0, 0);
+			Handle::RenderZHandleScale(quadric, width, length);
+			break;
+		}
 		glPopMatrix();
 	}
 	picking = false;
@@ -1502,32 +1507,31 @@ void Model::ResetHandlePosition(){
 	}
 }
 
-void Model::RenderSelectedFacesHandle(float zoom, int handleMode) {
+void Model::RenderSelectedFacesHandle(float zoom, int handleMode, int width, int height) {
 	if (m_hasSelected) {
-		int height = glutGet(GLUT_WINDOW_HEIGHT);
 		float width = 0.5/height* zoom;
 		float length = 20.0/height* zoom;
 		glPushMatrix();
-			switch(handleMode) {
-			case PAE3D_HANDLE_MOVE:
-				glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
-				glColor3f(1, 0, 0);
-				Handle::RenderXHandleMove(quadric, width, length);
-				glColor3f(0, 1, 0);
-				Handle::RenderYHandleMove(quadric, width, length);
-				glColor3f(0, 0, 1);
-				Handle::RenderZHandleMove(quadric, width, length);
-				break;
-			case PAE3D_HANDLE_SCALE:
-				glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
-				glColor3f(1, 0, 0);
-				Handle::RenderXHandleScale(quadric, width, length);
-				glColor3f(0, 1, 0);
-				Handle::RenderYHandleScale(quadric, width, length);
-				glColor3f(0, 0, 1);
-				Handle::RenderZHandleScale(quadric, width, length);
-				break;
-			}
+		switch(handleMode) {
+		case PAE3D_HANDLE_MOVE:
+			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
+			glColor3f(1, 0, 0);
+			Handle::RenderXHandleMove(quadric, width, length);
+			glColor3f(0, 1, 0);
+			Handle::RenderYHandleMove(quadric, width, length);
+			glColor3f(0, 0, 1);
+			Handle::RenderZHandleMove(quadric, width, length);
+			break;
+		case PAE3D_HANDLE_SCALE:
+			glTranslatef(m_selectedCenter.x, m_selectedCenter.y, m_selectedCenter.z);
+			glColor3f(1, 0, 0);
+			Handle::RenderXHandleScale(quadric, width, length);
+			glColor3f(0, 1, 0);
+			Handle::RenderYHandleScale(quadric, width, length);
+			glColor3f(0, 0, 1);
+			Handle::RenderZHandleScale(quadric, width, length);
+			break;
+		}
 		glPopMatrix();
 	}
 }

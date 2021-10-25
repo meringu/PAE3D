@@ -25,10 +25,10 @@ public:
 	void MoveSelected(float, float, float);
 	void ScaleSelected(float, float, float);
 	void DeselectEverything();
-	void RenderVertices(float);
-	void RenderEdges(float);
+	void RenderVertices(float, int, int);
+	void RenderEdges(float, int, int);
 	void RenderFaces(Color*, bool);
-	void RenderSelectedFacesHandle(float, int);
+	void RenderSelectedFacesHandle(float, int, int, int);
 	void AddVertex(PAE3D_Point);
 	void AddEdge(PAE3D_Edge);
 	void AddPoly(PAE3D_Polygon);
@@ -38,7 +38,7 @@ public:
 	void Merge();
 	void AddNormal();
 	int FindEdge(unsigned int, unsigned int);
-	void RenderPicker(float, int);
+	void RenderPicker(float, int, int, int);
 	void ProcessSelection(int, int, bool, bool, int);
 	void SetSelectType(int);
 	void CascadeFaceSelection(int);

@@ -1,8 +1,14 @@
-#ifdef __APPLE__
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_opengl.h>
+
+#if defined(__APPLE__)
 #define GL_SILENCE_DEPRECATION
-#include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #else
-#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #include <assert.h>
@@ -21,8 +27,9 @@
 using namespace std;
 
 GLuint g_mainWnd;
-GLuint g_nWinWidth = PAE3D_WIN_WIDTH;
-GLuint g_nWinHeight = PAE3D_WIN_HEIGHT;
+int g_nWinWidth = 1280;
+int g_nWinHeight = 720;
+int g_dpiScaling = 1;
 Model* g_model = NULL;
 Toolbar* g_toolbar = NULL;
 
@@ -57,12 +64,11 @@ void PAE3D_SetLights();
 void PAE3D_SetCamera();
 void PAE3D_MouseClick(int button, int state, int x, int y);
 void PAE3D_MouseMove(int x, int y);
-void PAE3D_KeyboardDown(unsigned char, int, int);
-void PAE3D_KeyboardUp(unsigned char, int, int);
+void PAE3D_KeyboardDown(SDL_Keycode);
+void PAE3D_KeyboardUp(SDL_Keycode);
 void PAE3D_RepostMain();
 void PAE3D_ButtonPushed(int);
 int getParami(int);
-
 
 int main(int argc, char** argv) {
 	const char* usage = "Usage: PAE3D [option]\n\nOption\t\tMeaning\n --help\t\tShow this message\n -o <file>\tLoad .obj file\n\t\tLoad default cube\n";
@@ -81,32 +87,89 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
-	glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-    glutInitWindowSize(g_nWinWidth, g_nWinHeight);
-    g_mainWnd = glutCreateWindow("PAE3D");
-    skyBoxXp = openTexture("textures/cubemapxp.jpg");
-    skyBoxXn = openTexture("textures/cubemapxn.jpg");
-    skyBoxYp = openTexture("textures/cubemapyp.jpg");
-    skyBoxYn = openTexture("textures/cubemapyn.jpg");
-    skyBoxZp = openTexture("textures/cubemapzp.jpg");
-    skyBoxZn = openTexture("textures/cubemapzn.jpg");
-    openCubeMap("textures/cubemapxp.jpg", "textures/cubemapxn.jpg", "textures/cubemapyp.jpg", "textures/cubemapyn.jpg", "textures/cubemapzp.jpg", "textures/cubemapzn.jpg");
+	uint32_t windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+	SDL_Window* Window = SDL_CreateWindow("PAE3D", 0, 0, g_nWinWidth, g_nWinHeight, windowFlags);
+	if (Window == NULL) {
+		printf("Failed to create winwow: %s\n", SDL_GetError());
+	}
+	SDL_Renderer* renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
+	SDL_GLContext Context = SDL_GL_CreateContext(Window);
+	SDL_GL_GetDrawableSize(Window, &g_nWinWidth, &g_nWinHeight);
+	int wx;
+	SDL_GetWindowSize(Window, &wx, NULL);
+	g_dpiScaling = g_nWinWidth / wx;
+    
+	skyBoxXp = openTexture("textures/cubemapxp.jpg");
+	skyBoxXn = openTexture("textures/cubemapxn.jpg");
+	skyBoxYp = openTexture("textures/cubemapyp.jpg");
+	skyBoxYn = openTexture("textures/cubemapyn.jpg");
+	skyBoxZp = openTexture("textures/cubemapzp.jpg");
+	skyBoxZn = openTexture("textures/cubemapzn.jpg");
     g_model = new Model(file);
-    glClearColor(0.5, 0.5, 0.5, 1);
-    glutDisplayFunc(PAE3D_Display);
-    glutReshapeFunc(PAE3D_Reshape);
-    glutMouseFunc(PAE3D_MouseClick);
-    glutMotionFunc(PAE3D_MouseMove);
-    glutKeyboardFunc(PAE3D_KeyboardDown);
-    glutKeyboardUpFunc(PAE3D_KeyboardUp);
-    PAE3D_SetLights();
-	PAE3D_SetCamera();
-	g_color = new Color(PAE3D_RepostMain, g_mainWnd, g_nWinHeight, PAE3D_KeyboardDown, PAE3D_KeyboardUp);
-    g_toolbar = new Toolbar(PAE3D_ButtonPushed, g_mainWnd, PAE3D_KeyboardDown, PAE3D_KeyboardUp, getParami);
-	glutMainLoop();
-    return 0;
+
+	g_color = new Color(PAE3D_KeyboardDown, PAE3D_KeyboardUp);
+	g_toolbar = new Toolbar(PAE3D_ButtonPushed, getParami);
+
+	int running = 1;
+	int fullScreen = 0;
+	while (running) {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+				case SDL_WINDOWEVENT:
+					if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+						SDL_GL_GetDrawableSize(Window, &g_nWinWidth, &g_nWinHeight);
+						SDL_GetWindowSize(Window, &wx, NULL);
+						g_dpiScaling = g_nWinWidth / wx;
+					break;
+				case SDL_KEYDOWN:
+					switch (event.key.keysym.sym) {
+						case SDLK_ESCAPE:
+							running = 0;
+							break;
+						case SDLK_k:
+							fullScreen = !fullScreen;
+							if (fullScreen) {
+								SDL_SetWindowFullscreen(Window, windowFlags | SDL_WINDOW_FULLSCREEN_DESKTOP);
+							}
+							else {
+								SDL_SetWindowFullscreen(Window, windowFlags);
+							}
+							break;
+						default:
+							PAE3D_KeyboardDown(event.key.keysym.sym);
+							break;
+					}
+					break;
+				case SDL_KEYUP:
+					PAE3D_KeyboardUp(event.key.keysym.sym);
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+				case SDL_MOUSEBUTTONUP:
+					PAE3D_MouseClick(event.button.button, event.button.state, event.button.x, event.button.y);
+					break;
+				case SDL_MOUSEMOTION:
+					PAE3D_MouseMove(event.motion.x, event.motion.y);
+					break;
+				case SDL_QUIT:
+					running = 0;
+					break;
+				default:
+					break;
+			}
+		}
+
+
+		glViewport(0, 0, g_nWinWidth, g_nWinHeight);
+		glClearColor(0.5, 0.5, 0.5, 1);
+
+		PAE3D_SetLights();
+		PAE3D_SetCamera();
+
+		PAE3D_Display();
+
+		SDL_GL_SwapWindow(Window);
+	}
 }
 
 int getParami(int value) {
@@ -182,8 +245,8 @@ void PAE3D_DisplayMode(int mode) {
 }
 
 void PAE3D_RepostMain() {
-	glutSetWindow(g_mainWnd);
-	glutPostRedisplay();
+	// glutSetWindow(g_mainWnd);
+	// glutPostRedisplay();
 }
 
 void PAE3D_Display() {
@@ -200,8 +263,8 @@ void PAE3D_Display() {
 			glDisable(GL_LIGHTING);
 			PAE3D_RenderGrid(zoom);
 			PAE3D_RenderAxes();
-			g_model->RenderVertices(zoom);
-			g_model->RenderEdges(zoom);
+			g_model->RenderVertices(zoom, g_nWinWidth, g_nWinHeight);
+			g_model->RenderEdges(zoom, g_nWinWidth, g_nWinHeight);
 			glEnable(GL_LIGHTING);
 			g_model->RenderFaces(g_color, false);
 			break;
@@ -223,13 +286,13 @@ void PAE3D_Display() {
 		break;
 	case PAE3D_SELECT_RIGHT:
 		glDisable(GL_LIGHTING);
-		g_model->RenderPicker(zoom, handleMode);
+		g_model->RenderPicker(zoom, g_nWinWidth, g_nWinHeight, handleMode);
 		g_model->ProcessSelection(g_lastX, g_lastY, m_shiftDownNow, false, -1);
 		glEnable(GL_LIGHTING);
 		break;
 	case PAE3D_SELECT_LEFT:
 		glDisable(GL_LIGHTING);
-		g_model->RenderPicker(zoom, handleMode);
+		g_model->RenderPicker(zoom, g_nWinWidth, g_nWinHeight, handleMode);
 		int mat = -1;
 		if (leftCLickOperation == PAE3D_LEFTCLICK_COLOR) {
 			mat = g_color->GetCurrentMaterial();
@@ -240,87 +303,68 @@ void PAE3D_Display() {
 	}
 	if (mode != PAE3D_RENDER) {
 		mode = PAE3D_RENDER;
-		glutPostRedisplay();
+		// glutPostRedisplay();
 	} else {
 		glClear(GL_DEPTH_BUFFER_BIT);
-		g_model->RenderSelectedFacesHandle(zoom, handleMode);
+		g_model->RenderSelectedFacesHandle(zoom, handleMode, g_nWinWidth, g_nWinHeight);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_COLOR_MATERIAL);
-		glutSwapBuffers();
+		// glutSwapBuffers();
 	}
-	g_toolbar->repaint();
+	// g_toolbar->Display(g_nWinWidth / g_dpiScaling, g_nWinHeight / g_dpiScaling);
+	// g_color->Display(g_nWinWidth / g_dpiScaling, g_nWinHeight / g_dpiScaling);
 }
 
-void PAE3D_Reshape(int w, int h) {
-    if (h == 0) h = 1;
-
-	if(w>= PAE3D_WIN_WIDTH){
-		g_nWinWidth = w;
-	}else{	g_nWinWidth = PAE3D_WIN_WIDTH;}
-
-	if(h>= PAE3D_WIN_HEIGHT){
-		g_nWinHeight = h;
-	}else{	g_nWinHeight = PAE3D_WIN_HEIGHT;}
-
-	/*if(!subToggle){
-		g_color->Close();
-	}*/
-	glutReshapeWindow(g_nWinWidth,g_nWinHeight);
-	glViewport(0, 0, g_nWinWidth, g_nWinHeight);
-    PAE3D_SetCamera();
-    g_color->Resize(w, h);
-    glutPostRedisplay();
-}
-
-void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
-	(void)x;
-	(void)y;
-	int sp = glutGetModifiers();
-	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
-	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
+void PAE3D_KeyboardDown(SDL_Keycode key) {
 	switch (key) {
-	case 'g':
+	case SDLK_LSHIFT:
+		m_shiftDownNow = true;
+		break;
+	case SDLK_LCTRL:
+		m_ctrlDownNow = true;
+		break;
+	case SDLK_g:
 		g_model->Subdivide(true);
 		break;
-	case 3:
+	case SDLK_3:
 		g_model->Duplicate();
 		break;
 	case 127:
 		g_model->DeleteSelection();
 		break;
-	case 'f':
+	case SDLK_f:
 		g_model->SetSelectType(PAE3D_SELECT_FACES);
 		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
-	case 'v':
+	case SDLK_v:
 		g_model->SetSelectType(PAE3D_SELECT_VERTICES);
 		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
-	case 'e':
+	case SDLK_e:
 		g_model->SetSelectType(PAE3D_SELECT_EDGES);
 		leftCLickOperation = PAE3D_LEFTCLICK_NOTHING;
 		break;
-	case 'm':
+	case SDLK_m:
 		handleMode = PAE3D_HANDLE_MOVE;
 		break;
-	case 's':
+	case SDLK_s:
 		handleMode = PAE3D_HANDLE_SCALE;
 		break;
-	case 'x':
+	case SDLK_x:
 		g_model->Extrude();
 		break;
-	case 'l':
+	case SDLK_l:
 		g_model->Merge();
 		break;
-	case 'p':
+	case SDLK_p:
 		displayMode++;
 		displayMode%=2;
 		break;
-	case 'd':
+	case SDLK_d:
 		g_model->Subdivide(false);
 		break;
-	case 'c':
+	case SDLK_c:
 		switch(leftCLickOperation){
 		case PAE3D_LEFTCLICK_NOTHING:
 			leftCLickOperation = PAE3D_LEFTCLICK_COLOR;
@@ -330,54 +374,52 @@ void PAE3D_KeyboardDown(unsigned char key, int x, int y) {
 			break;
 		}
 		break;
-	case 'a':
+	case SDLK_a:
 		g_model->SelectAll();
 		break;
 	}
-
-	glutPostRedisplay();
 }
 
-void PAE3D_KeyboardUp(unsigned char key, int x, int y) {
-	(void)x;
-	(void)y;
-	int sp = glutGetModifiers();
-	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
-	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
+void PAE3D_KeyboardUp(SDL_Keycode key) {
 	switch(key) {
+		case SDLK_LSHIFT:
+			m_shiftDownNow = false;
+			break;
+		case SDLK_LCTRL:
+			m_ctrlDownNow = false;
+			break;
 	}
-	glutPostRedisplay();
 }
 
-void PAE3D_MouseClick(int button, int state, int x, int y){
+void PAE3D_MouseClick(int button, int state, int x, int y) {
+	printf("%d x %d\n", x, y);
 	g_lastX = x;
 	g_lastY = y;
-	int sp = glutGetModifiers();
-	m_shiftDownNow = GLUT_ACTIVE_SHIFT & sp;
-	m_ctrlDownNow = GLUT_ACTIVE_CTRL & sp;
+	if (g_toolbar->Click(button, state, x, y, g_nWinWidth, g_nWinHeight)) {
+		return;
+	}
 	switch (button) {
-	case GLUT_MIDDLE_BUTTON:
-		q_middleClickDown = state == GLUT_DOWN;
-		m_shiftDownLastMiddleClick = GLUT_ACTIVE_SHIFT & sp;
-		m_ctrlDownLastMiddleClick = GLUT_ACTIVE_CTRL & sp;
+	case SDL_BUTTON_MIDDLE:
+		q_middleClickDown = state == SDL_PRESSED;
+		m_shiftDownLastMiddleClick = m_shiftDownNow;
+		m_ctrlDownLastMiddleClick = m_ctrlDownNow;
 		break;
-	case GLUT_LEFT_BUTTON:
-		q_leftClickDown = state == GLUT_DOWN;
-		if (state == GLUT_DOWN) {
+	case SDL_BUTTON_LEFT:
+		q_leftClickDown = state == SDL_PRESSED;
+		if (state == SDL_PRESSED) {
 			mode = PAE3D_SELECT_LEFT;
 		}
 		break;
-	case GLUT_RIGHT_BUTTON:
-		if (state == GLUT_DOWN) {
+	case SDL_BUTTON_RIGHT:
+		if (state == SDL_PRESSED) {
 			mode = PAE3D_SELECT_RIGHT;
 		}
 		break;
 	}
-	glutPostRedisplay();
 }
 
 void PAE3D_MouseMove(int x, int y) {
-	int height = glutGet(GLUT_WINDOW_HEIGHT);
+	int height = g_nWinHeight;
 	float worldDX = ((g_lastX-x)*cos(rotation*M_PI/180)+(y-g_lastY)*sin(tilt*M_PI/180)*sin(rotation*M_PI/180))*zoom/height/4;
 	float worldDY = (y-g_lastY)*cos(tilt*M_PI/180)*zoom/height/4;
 	float worldDZ = ((g_lastX-x)*sin(rotation*M_PI/180)+(g_lastY-y)*sin(tilt*M_PI/180)*cos(rotation*M_PI/180))*zoom/height/4;
@@ -431,8 +473,6 @@ void PAE3D_MouseMove(int x, int y) {
 	}
 	g_lastX = x;
 	g_lastY = y;
-	PAE3D_SetCamera();
-	glutPostRedisplay();
 }
 
 void PAE3D_SetLights() {
