@@ -79,3 +79,26 @@ A Vagrantfile is provided for testing on Linux from another host OS.
 
     vagrant plugin install vagrant-reload
     vagrant up
+
+## Linux
+
+Install dependencies (apt):
+
+```
+apt-get install \
+  build-essential \
+  freeglut3-dev \
+  libjpeg-dev libpng-dev
+```
+
+Build
+
+```
+make
+```
+
+Run
+
+```
+./build/PAE3D
+```
